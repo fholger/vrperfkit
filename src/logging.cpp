@@ -1,6 +1,7 @@
 #include "logging.h"
 
 #include <mutex>
+#include <ctime>
 
 namespace fs = std::filesystem;
 
@@ -23,7 +24,9 @@ namespace vrperfkit {
 	LogMessage::LogMessage(const std::string &prefix, bool flush) : flush(flush) {
 		char timeBuf[16];
 		std::time_t now = std::time(nullptr);
-		std::strftime(timeBuf, sizeof(timeBuf), "%H:%M:%S ", std::localtime(&now));
+		tm localTime;
+		localtime_s(&localTime, &now);
+		std::strftime(timeBuf, sizeof(timeBuf), "%H:%M:%S ", &localTime);
 
 		g_logMutex.lock();
 		g_logFile << timeBuf << " " << prefix;

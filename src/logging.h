@@ -1,4 +1,5 @@
 #pragma once
+#include <codecvt>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -22,6 +23,12 @@ namespace vrperfkit {
 		LogMessage& operator<<(const T &t) {
 			g_logFile << t;
 			return *this;
+		}
+
+		template<>
+		LogMessage& operator<<(const std::wstring &str) {
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+			return *this << conv.to_bytes(str);
 		}
 
 	private:

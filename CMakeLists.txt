@@ -6,15 +6,23 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(ThirdParty/minhook)
 
+set(RESOURCE_FILES
+	resources/exports.def
+)
+source_group("resources" ${RESOURCE_FILES})
+
 set(PROXY_FILES
 	src/proxy/dxgi.cpp
 )
 source_group("proxy" ${PROXY_FILES})
 
-set(RESOURCE_FILES
-	resources/exports.def
+set(HOOK_FILES
+	src/hooks/hooks.h
+	src/hooks/hooks.cpp
+	src/hooks/openvr_hooks.h
+	src/hooks/openvr_hooks.cpp
 )
-source_group("resources" ${RESOURCE_FILES})
+source_group("hooks" ${HOOK_FILES})
 
 set(MAIN_FILES
 	src/dllmain.cpp
@@ -26,6 +34,7 @@ set(MAIN_FILES
 set(PROJECT_FILES
 	${RESOURCE_FILES}
 	${PROXY_FILES}
+	${HOOK_FILES}
 	${MAIN_FILES}
 )
 
@@ -33,6 +42,12 @@ include_directories(
 	src
 	ThirdParty/minhook/include
 )
+
+add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	add_definitions(-DWIN64)
+endif()
 
 add_library(vrperfkit SHARED ${PROJECT_FILES})
 set_target_properties(vrperfkit PROPERTIES OUTPUT_NAME "dxgi")
