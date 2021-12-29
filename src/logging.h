@@ -24,10 +24,6 @@ namespace vrperfkit {
 			return *this;
 		}
 
-		LogMessage& operator<<(std::basic_ostream &(*fn)(std::basic_ostream&)) {
-			
-		}
-
 	private:
 		bool flush;
 	};

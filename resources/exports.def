@@ -1,0 +1,21 @@
+EXPORTS
+	; exports for dxgi.dll
+	; ApplyCompatResolutionQuirking @1
+	CompatString @2
+	CompatValue @3
+	CreateDXGIFactory @10
+	CreateDXGIFactory1 @11
+	CreateDXGIFactory2 @12
+	DXGID3D10CreateDevice @13
+	DXGID3D10CreateLayeredDevice @14
+	DXGID3D10GetLayeredDeviceSize @15
+	DXGID3D10RegisterLayers @16
+	DXGIDeclareAdapterRemovalSupport @17
+	DXGIDumpJournal @4
+	DXGIGetDebugInterface1 @18
+	DXGIReportAdapterConfiguration @19
+	; PIXBeginCapture @5
+	; PIXEndCapture @6
+	; PIXGetCaptureState @7
+	; SetAppCompatStringPointer @8
+	; UpdateHMDEmulationStatus @9

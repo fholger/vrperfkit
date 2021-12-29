@@ -35,6 +35,7 @@ BOOL WINAPI DllMain(HMODULE module, DWORD reason, LPVOID) {
 		break;
 
 	case DLL_PROCESS_DETACH:
+		LOG_INFO << "Shutting down\n";
 		break;
 	}
 

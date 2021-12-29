@@ -26,4 +26,8 @@ set(PROJECT_FILES
 	${PROXY_FILES}
 	${MAIN_FILES}
 )
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 add_library(vrperfkit SHARED ${PROJECT_FILES})
+set_target_properties(vrperfkit PROPERTIES OUTPUT_NAME "dxgi")
