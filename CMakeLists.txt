@@ -6,6 +6,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(ThirdParty/minhook)
 
+set(YAML_CPP_BUILD_CONTRIB OFF)
+set(YAML_CPP_BUILD_TOOLS OFF)
+set(YAML_BUILD_SHARED_LIBS OFF)
+add_subdirectory(ThirdParty/yaml-cpp)
+
 set(RESOURCE_FILES
 	resources/exports.def
 )
@@ -43,6 +48,7 @@ set(PROJECT_FILES
 include_directories(
 	src
 	ThirdParty/minhook/include
+	ThirdParty/yaml-cpp/include
 )
 
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
@@ -53,4 +59,4 @@ endif()
 
 add_library(vrperfkit SHARED ${PROJECT_FILES})
 set_target_properties(vrperfkit PROPERTIES OUTPUT_NAME "dxgi")
-target_link_libraries(vrperfkit minhook)
+target_link_libraries(vrperfkit minhook yaml-cpp)
