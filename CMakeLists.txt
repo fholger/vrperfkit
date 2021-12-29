@@ -4,6 +4,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_subdirectory(ThirdParty/minhook)
+
 set(PROXY_FILES
 	src/proxy/dxgi.cpp
 )
@@ -27,7 +29,11 @@ set(PROJECT_FILES
 	${MAIN_FILES}
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(
+	src
+	ThirdParty/minhook/include
+)
 
 add_library(vrperfkit SHARED ${PROJECT_FILES})
 set_target_properties(vrperfkit PROPERTIES OUTPUT_NAME "dxgi")
+target_link_libraries(vrperfkit minhook)
