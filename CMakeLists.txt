@@ -49,6 +49,7 @@ include_directories(
 	src
 	ThirdParty/minhook/include
 	ThirdParty/yaml-cpp/include
+	ThirdParty/LibOVR/include
 )
 
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
