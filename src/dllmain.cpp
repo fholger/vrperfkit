@@ -1,6 +1,7 @@
 #include "logging.h"
 #include "win_header_sane.h"
 #include "hooks/hooks.h"
+#include "hooks/oculus_hooks.h"
 #include "hooks/openvr_hooks.h"
 
 namespace fs = std::filesystem;
@@ -20,6 +21,7 @@ namespace {
 
 	void InstallVrHooks() {
 		vrperfkit::hooks::InstallOpenVrHooks();
+		vrperfkit::hooks::InstallOculusHooks();
 	}
 
 	HMODULE WINAPI Hook_LoadLibraryA(LPCSTR lpFileName) {

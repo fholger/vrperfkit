@@ -21,6 +21,8 @@ set(HOOK_FILES
 	src/hooks/hooks.cpp
 	src/hooks/openvr_hooks.h
 	src/hooks/openvr_hooks.cpp
+	src/hooks/oculus_hooks.h
+	src/hooks/oculus_hooks.cpp
 )
 source_group("hooks" ${HOOK_FILES})
 
