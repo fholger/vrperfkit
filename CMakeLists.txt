@@ -1,8 +1,11 @@
 project(VRPerfKit)
 enable_language(C CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(PROXY_FILES
-	proxy/dxgi.cpp
+	src/proxy/dxgi.cpp
 )
 source_group("proxy" ${PROXY_FILES})
 
@@ -11,8 +14,16 @@ set(RESOURCE_FILES
 )
 source_group("resources" ${RESOURCE_FILES})
 
-set(SOURCE_FILES
-	${PROXY_FILES}
-	dllmain.cpp
+set(MAIN_FILES
+	src/dllmain.cpp
+	src/logging.h
+	src/logging.cpp
+	src/win_header_sane.h
 )
-add_library(vrperfkit SHARED ${SOURCE_FILES})
+
+set(PROJECT_FILES
+	${RESOURCE_FILES}
+	${PROXY_FILES}
+	${MAIN_FILES}
+)
+add_library(vrperfkit SHARED ${PROJECT_FILES})
