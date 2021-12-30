@@ -3,11 +3,19 @@
 #include "logging.h"
 #include "win_header_sane.h"
 #include "OVR_CAPI.h"
+#include "upscaling/upscaling_mod.h"
 
 namespace {
-	ovrHmdDesc ovrHook_GetHmdDesc(ovrSession session) {
-		ovrHmdDesc result = vrperfkit::hooks::CallOriginal(ovrHook_GetHmdDesc)(session);
-		LOG_DEBUG << "ovr_GetHmdDesc called. Headset resolution: " << result.Resolution.w << "x" << result.Resolution.h;
+	ovrSizei ovrHook_GetFovTextureSize(ovrSession session, ovrEyeType eye, ovrFovPort fov, float pixelsPerDisplayPixel) {
+		ovrSizei result = vrperfkit::hooks::CallOriginal(ovrHook_GetFovTextureSize)(session, eye, fov, pixelsPerDisplayPixel);
+		if (result.w > 0 && result.h > 0) {
+			uint32_t width = result.w;
+			uint32_t height = result.h;
+			vrperfkit::g_upscalingMod.AdjustRenderResolution(width, height);
+			LOG_DEBUG << "Render resolution adjusted from " << result.w << "x" << result.h << " to " << width << "x" << height;
+			result.w = width;
+			result.h = height;
+		}
 		return result;
 	}
 }
@@ -32,7 +40,7 @@ namespace vrperfkit {
 			}
 
 			LOG_INFO << dllName << " is loaded in the process, installing hooks...";
-			InstallHookInDll("ovr_GetHmdDesc", handle, ovrHook_GetHmdDesc);
+			InstallHookInDll("ovr_GetFovTextureSize", handle, ovrHook_GetFovTextureSize);
 
 			hooksLoaded = true;
 		}

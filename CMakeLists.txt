@@ -31,6 +31,12 @@ set(HOOK_FILES
 )
 source_group("hooks" ${HOOK_FILES})
 
+set(UPSCALING_FILES
+	src/upscaling/upscaling_mod.h
+	src/upscaling/upscaling_mod.cpp
+)
+source_group("upscaling" ${UPSCALING_FILES})
+
 set(MAIN_FILES
 	src/config.h
 	src/config.cpp
@@ -44,6 +50,7 @@ set(PROJECT_FILES
 	${RESOURCE_FILES}
 	${PROXY_FILES}
 	${HOOK_FILES}
+	${UPSCALING_FILES}
 	${MAIN_FILES}
 )
 
