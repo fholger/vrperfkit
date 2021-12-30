@@ -21,15 +21,19 @@ set(PROXY_FILES
 )
 source_group("proxy" ${PROXY_FILES})
 
-set(HOOK_FILES
-	src/hooks/hooks.h
-	src/hooks/hooks.cpp
-	src/hooks/openvr_hooks.h
-	src/hooks/openvr_hooks.cpp
-	src/hooks/oculus_hooks.h
-	src/hooks/oculus_hooks.cpp
+set(OCULUS_FILES
+	src/oculus/oculus_hooks.h
+	src/oculus/oculus_hooks.cpp
+	src/oculus/oculus_manager.h
+	src/oculus/oculus_manager.cpp
 )
-source_group("hooks" ${HOOK_FILES})
+source_group("oculus" ${OCULUS_FILES})
+
+set(OPENVR_FILES
+	src/openvr/openvr_hooks.h
+	src/openvr/openvr_hooks.cpp
+)
+source_group("openvr" ${OPENVR_FILES})
 
 set(UPSCALING_FILES
 	src/upscaling/upscaling_mod.h
@@ -41,6 +45,8 @@ set(MAIN_FILES
 	src/config.h
 	src/config.cpp
 	src/dllmain.cpp
+	src/hooks.h
+	src/hooks.cpp
 	src/logging.h
 	src/logging.cpp
 	src/win_header_sane.h
@@ -49,7 +55,8 @@ set(MAIN_FILES
 set(PROJECT_FILES
 	${RESOURCE_FILES}
 	${PROXY_FILES}
-	${HOOK_FILES}
+	${OCULUS_FILES}
+	${OPENVR_FILES}
 	${UPSCALING_FILES}
 	${MAIN_FILES}
 )
