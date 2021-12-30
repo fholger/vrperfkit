@@ -1,0 +1,28 @@
+#pragma once
+#include <filesystem>
+
+namespace vrperfkit {
+	enum class UpscaleMethod {
+		FSR,
+		NIS,
+	};
+
+	struct UpscaleConfig {
+		bool enabled = false;
+		UpscaleMethod method = UpscaleMethod::FSR;
+		float renderScale = 1.0f;
+		float sharpness = 0.7f;
+		float radius = 0.6f;
+		bool applyMipBias = true;
+	};
+
+	struct Config {
+		UpscaleConfig upscaling;
+		bool debugMode = false;
+	};
+
+	extern Config g_config;
+
+	void LoadConfig(const std::filesystem::path &configPath);
+	void PrintCurrentConfig();
+}

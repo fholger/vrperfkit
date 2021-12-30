@@ -32,6 +32,8 @@ set(HOOK_FILES
 source_group("hooks" ${HOOK_FILES})
 
 set(MAIN_FILES
+	src/config.h
+	src/config.cpp
 	src/dllmain.cpp
 	src/logging.h
 	src/logging.cpp

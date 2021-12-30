@@ -1,0 +1,9 @@
+upscaling:
+  enabled: true
+  method: fsr
+  renderScale: 0.77
+  sharpness: 0.7
+  radius: 0.6
+  applyMipBias: true
+
+debugMode: false

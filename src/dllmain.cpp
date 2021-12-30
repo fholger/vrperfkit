@@ -1,3 +1,4 @@
+#include "config.h"
 #include "logging.h"
 #include "win_header_sane.h"
 #include "hooks/hooks.h"
@@ -75,6 +76,9 @@ namespace {
 		LOG_INFO << "VR Performance Toolkit";
 		LOG_INFO << "======================\n";
 		vrperfkit::FlushLog();
+
+		vrperfkit::LoadConfig(g_basePath / "vrperfkit.yml");
+		vrperfkit::PrintCurrentConfig();
 
 		vrperfkit::hooks::Init();
 		vrperfkit::hooks::InstallHook("LoadLibraryA", LoadLibraryA, Hook_LoadLibraryA);
