@@ -54,8 +54,12 @@ namespace vrperfkit {
 			upscaling.enabled = upscaleCfg["enabled"].as<bool>(upscaling.enabled);
 			upscaling.method = MethodFromString(upscaleCfg["method"].as<std::string>(MethodToString(upscaling.method)));
 			upscaling.renderScale = upscaleCfg["renderScale"].as<float>(upscaling.renderScale);
-			upscaling.sharpness = upscaleCfg["sharpness"].as<float>(upscaling.sharpness);
-			upscaling.radius = upscaleCfg["radius"].as<float>(upscaling.radius);
+			if (upscaling.renderScale < 0.5f) {
+				LOG_INFO << "Setting render scale to minimum value of 0.5";
+				upscaling.renderScale = 0.5f;
+			}
+			upscaling.sharpness = std::max(0.f, upscaleCfg["sharpness"].as<float>(upscaling.sharpness));
+			upscaling.radius = std::max(0.f, upscaleCfg["radius"].as<float>(upscaling.radius));
 			upscaling.applyMipBias = upscaleCfg["applyMipBias"].as<bool>(upscaling.applyMipBias);
 
 			g_config.debugMode = cfg["debugMode"].as<bool>(g_config.debugMode);

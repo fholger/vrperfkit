@@ -1,6 +1,9 @@
 #include "oculus_manager.h"
 
 #include "logging.h"
+#include "post_processor.h"
+#include "d3d11/d3d11_helper.h"
+
 #include <wrl/client.h>
 #include <d3d11.h>
 #include <OVR_CAPI_D3D.h>
@@ -26,7 +29,12 @@ namespace vrperfkit {
 		ComPtr<ID3D11Device> device;
 		ComPtr<ID3D11DeviceContext> context;
 		std::vector<ComPtr<ID3D11Texture2D>> submittedTextures[2];
+		ComPtr<ID3D11Texture2D> resolveTexture[2];
+		std::vector<ComPtr<ID3D11ShaderResourceView>> submittedViews[2];
 		std::vector<ComPtr<ID3D11Texture2D>> outputTextures[2];
+		std::vector<ComPtr<ID3D11ShaderResourceView>> outputViews[2];
+		std::vector<ComPtr<ID3D11UnorderedAccessView>> outputUavs[2];
+		bool usingArrayTex;
 	};
 
 	void OculusManager::Init(ovrSession session, ovrTextureSwapChain leftEyeChain, ovrTextureSwapChain rightEyeChain) {
@@ -111,10 +119,29 @@ namespace vrperfkit {
 
 			ovrTextureSwapChainDesc chainDesc;
 			Check("getting swapchain description", ovr_GetTextureSwapChainDesc(session, submittedEyeChains[eye], &chainDesc));
+			if (chainDesc.SampleCount > 1) {
+				LOG_INFO << "Submitted textures are multi-sampled, creating resolve texture";
+				d3d11Res->resolveTexture[eye] = CreateResolveTexture(d3d11Res->device.Get(), d3d11Res->submittedTextures[0][0].Get());
+			}
+
+			for (int i = 0; i < length; ++i) {
+				auto view = CreateShaderResourceView(d3d11Res->device.Get(), 
+					chainDesc.SampleCount > 1 
+						? d3d11Res->resolveTexture[eye].Get()
+						: d3d11Res->submittedTextures[eye][i].Get());
+				d3d11Res->submittedViews[eye].push_back(view);
+			}
+
 			chainDesc.SampleCount = 1;
 			chainDesc.MipLevels = 1;
 			chainDesc.BindFlags = ovrTextureBind_DX_UnorderedAccess;
 			chainDesc.MiscFlags = ovrTextureMisc_None;
+			uint32_t w = chainDesc.Width, h = chainDesc.Height;
+			g_postprocess.AdjustOutputResolution(w, h);
+			LOG_INFO << "Submitted textures have resolution " << chainDesc.Width << "x" << chainDesc.Height
+					<< ", creating output textures of size " << w << "x" << h;
+			chainDesc.Width = w;
+			chainDesc.Height = h;
 			Check("creating output swapchain", ovr_CreateTextureSwapChainDX(session, d3d11Res->device.Get(), &chainDesc, &outputEyeChains[eye]));
 
 			Check("getting texture swapchain length", ovr_GetTextureSwapChainLength(session, outputEyeChains[eye], &length));
@@ -122,6 +149,42 @@ namespace vrperfkit {
 				ComPtr<ID3D11Texture2D> texture;
 				Check("getting swapchain texture", ovr_GetTextureSwapChainBufferDX(session, outputEyeChains[eye], i, IID_PPV_ARGS(texture.GetAddressOf())));
 				d3d11Res->outputTextures[eye].push_back(texture);
+
+				auto view = CreateShaderResourceView(d3d11Res->device.Get(), texture.Get());
+				d3d11Res->outputViews[eye].push_back(view);
+
+				auto uav = CreateUnorderedAccessView(d3d11Res->device.Get(), texture.Get());
+				d3d11Res->outputUavs[eye].push_back(uav);
+			}
+		}
+
+		d3d11Res->usingArrayTex = false;
+
+		if (submittedEyeChains[1] == nullptr) {
+			LOG_INFO << "Game is using a single texture for both eyes";
+			d3d11Res->submittedTextures[1] = d3d11Res->submittedTextures[0];
+			d3d11Res->resolveTexture[1] = d3d11Res->resolveTexture[0];
+			d3d11Res->outputTextures[1] = d3d11Res->outputTextures[0];
+			ovrTextureSwapChainDesc chainDesc;
+			Check("getting swapchain description", ovr_GetTextureSwapChainDesc(session, submittedEyeChains[0], &chainDesc));
+			if (chainDesc.ArraySize == 1) {
+				d3d11Res->submittedViews[1] = d3d11Res->submittedViews[0];
+				d3d11Res->outputViews[1] = d3d11Res->outputViews[0];
+				d3d11Res->outputUavs[1] = d3d11Res->outputUavs[0];
+			}
+			else {
+				LOG_INFO << "Game is using an array texture";
+				d3d11Res->usingArrayTex = true;
+				for (auto tex : d3d11Res->submittedTextures[0]) {
+					auto view = CreateShaderResourceView(d3d11Res->device.Get(), tex.Get(), 1);
+					d3d11Res->submittedViews[1].push_back(view);
+				}
+				for (auto tex : d3d11Res->outputTextures[0]) {
+					auto view = CreateShaderResourceView(d3d11Res->device.Get(), tex.Get(), 1);
+					d3d11Res->outputViews[1].push_back(view);
+					auto uav = CreateUnorderedAccessView(d3d11Res->device.Get(), tex.Get(), 1);
+					d3d11Res->outputUavs[1].push_back(uav);
+				}
 			}
 		}
 

@@ -41,12 +41,6 @@ set(D3D11_FILES
 )
 source_group("d3d11" ${D3D11_FILES})
 
-set(UPSCALING_FILES
-	src/upscaling/upscaling_mod.h
-	src/upscaling/upscaling_mod.cpp
-)
-source_group("upscaling" ${UPSCALING_FILES})
-
 set(MAIN_FILES
 	src/config.h
 	src/config.cpp
@@ -56,6 +50,8 @@ set(MAIN_FILES
 	src/hooks.cpp
 	src/logging.h
 	src/logging.cpp
+	src/post_processor.h
+	src/post_processor.cpp
 	src/win_header_sane.h
 )
 
@@ -65,7 +61,6 @@ set(PROJECT_FILES
 	${OCULUS_FILES}
 	${OPENVR_FILES}
 	${D3D11_FILES}
-	${UPSCALING_FILES}
 	${MAIN_FILES}
 )
 

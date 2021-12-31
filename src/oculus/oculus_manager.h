@@ -21,7 +21,7 @@ namespace vrperfkit {
 		GraphicsApi graphicsApi = GraphicsApi::UNKNOWN;
 		ovrSession session = nullptr;
 		ovrTextureSwapChain submittedEyeChains[2] = { nullptr, nullptr };
-		ovrTextureSwapChain processedEyeChains[2] = { nullptr, nullptr };
+		ovrTextureSwapChain outputEyeChains[2] = { nullptr, nullptr };
 
 		std::unique_ptr<OculusD3D11Resources> d3d11Res;
 		void InitD3D11();

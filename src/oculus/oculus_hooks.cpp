@@ -4,7 +4,7 @@
 #include "oculus_manager.h"
 #include "win_header_sane.h"
 #include "OVR_CAPI.h"
-#include "upscaling/upscaling_mod.h"
+#include "post_processor.h"
 
 namespace {
 	HMODULE g_oculusDll = nullptr;
@@ -14,7 +14,7 @@ namespace {
 		if (result.w > 0 && result.h > 0) {
 			uint32_t width = result.w;
 			uint32_t height = result.h;
-			vrperfkit::g_upscalingMod.AdjustRenderResolution(width, height);
+			vrperfkit::g_postprocess.AdjustInputResolution(width, height);
 			//LOG_DEBUG << "Render resolution adjusted from " << result.w << "x" << result.h << " to " << width << "x" << height;
 			result.w = width;
 			result.h = height;
