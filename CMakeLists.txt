@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.12)
+
 project(VRPerfKit)
 enable_language(C CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -10,6 +12,13 @@ set(YAML_CPP_BUILD_CONTRIB OFF)
 set(YAML_CPP_BUILD_TOOLS OFF)
 set(YAML_BUILD_SHARED_LIBS OFF)
 add_subdirectory(ThirdParty/yaml-cpp)
+
+function(set_compute_shader FILE OUT_FILE VAR_NAME)
+	set_property(SOURCE ${FILE} PROPERTY VS_SHADER_TPE Compute)
+	set_property(SOURCE ${FILE} PROPERTY VS_SHADER_MODEL "5.0")
+	set_property(SOURCE ${FILE} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "${OUT_FILE}")
+	set_property(SOURCE ${FILE} PROPERTY VS_SHADER_VARIABLE_NAME "${VAR_NAME}")
+endfunction()
 
 set(RESOURCE_FILES
 	resources/exports.def
@@ -41,6 +50,16 @@ set(D3D11_FILES
 )
 source_group("d3d11" ${D3D11_FILES})
 
+set(FSR_FILES
+	src/fsr/fsr_easu.hlsl
+	src/fsr/fsr_rcas.hlsl
+	src/fsr/ffx_a.h
+	src/fsr/ffx_fsr1.h
+)
+source_group("fsr" ${FSR_FILES})
+set_compute_shader(src/fsr/fsr_easu.hlsl "shader_fsr_easu.h" "g_FSRUpscaleShader")
+set_compute_shader(src/fsr/fsr_rcas.hlsl "shader_fsr_rcas.h" "g_FSRSharpenShader")
+
 set(MAIN_FILES
 	src/config.h
 	src/config.cpp
@@ -61,6 +80,7 @@ set(PROJECT_FILES
 	${OCULUS_FILES}
 	${OPENVR_FILES}
 	${D3D11_FILES}
+	${FSR_FILES}
 	${MAIN_FILES}
 )
 
@@ -69,6 +89,7 @@ include_directories(
 	ThirdParty/minhook/include
 	ThirdParty/yaml-cpp/include
 	ThirdParty/LibOVR/include
+	${CMAKE_CURRENT_BINARY_DIR}
 )
 
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
