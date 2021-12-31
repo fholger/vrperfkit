@@ -16,6 +16,16 @@ namespace {
 			return s.str();
 		}
 	}
+}
+
+namespace vrperfkit {
+
+	void CheckResult(const std::string &action, HRESULT result) {
+		if (FAILED(result)) {
+			std::string message = "Failed " + action + ": " + MapResult(result);
+			throw std::exception(message.c_str());
+		}
+	}
 	
 	DXGI_FORMAT TranslateTypelessFormats(DXGI_FORMAT format) {
 		switch (format) {
@@ -33,16 +43,6 @@ namespace {
 			return DXGI_FORMAT_B8G8R8A8_UNORM;
 		default:
 			return format;
-		}
-	}
-}
-
-namespace vrperfkit {
-
-	void CheckResult(const std::string &action, HRESULT result) {
-		if (FAILED(result)) {
-			std::string message = "Failed " + action + ": " + MapResult(result);
-			throw std::exception(message.c_str());
 		}
 	}
 

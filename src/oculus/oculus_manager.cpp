@@ -34,6 +34,7 @@ namespace vrperfkit {
 		std::vector<ComPtr<ID3D11Texture2D>> outputTextures[2];
 		std::vector<ComPtr<ID3D11ShaderResourceView>> outputViews[2];
 		std::vector<ComPtr<ID3D11UnorderedAccessView>> outputUavs[2];
+		bool multisampled[2];
 		bool usingArrayTex;
 	};
 
@@ -96,6 +97,17 @@ namespace vrperfkit {
 		if (failed) {
 			return;
 		}
+
+		try {
+			if (graphicsApi == GraphicsApi::D3D11) {
+				PostProcessD3D11(eyeLayer);
+			}
+		}
+		catch (const std::exception &e) {
+			LOG_ERROR << "Failed during post processing: " << e.what();
+			Shutdown();
+			failed = true;
+		}
 	}
 
 	void OculusManager::InitD3D11() {
@@ -104,6 +116,7 @@ namespace vrperfkit {
 		d3d11Res.reset(new OculusD3D11Resources);
 
 		for (int eye = 0; eye < 2; ++eye) {
+			d3d11Res->multisampled[eye] = false;
 			if (submittedEyeChains[eye] == nullptr)
 				continue;
 
@@ -122,6 +135,7 @@ namespace vrperfkit {
 			if (chainDesc.SampleCount > 1) {
 				LOG_INFO << "Submitted textures are multi-sampled, creating resolve texture";
 				d3d11Res->resolveTexture[eye] = CreateResolveTexture(d3d11Res->device.Get(), d3d11Res->submittedTextures[0][0].Get());
+				d3d11Res->multisampled[eye] = true;
 			}
 
 			for (int i = 0; i < length; ++i) {
@@ -180,9 +194,10 @@ namespace vrperfkit {
 					d3d11Res->submittedViews[1].push_back(view);
 				}
 				for (auto tex : d3d11Res->outputTextures[0]) {
-					auto view = CreateShaderResourceView(d3d11Res->device.Get(), tex.Get(), 1);
+					auto resolvedTex = d3d11Res->resolveTexture[1] != nullptr ? d3d11Res->resolveTexture[1] : tex;
+					auto view = CreateShaderResourceView(d3d11Res->device.Get(), resolvedTex.Get(), 1);
 					d3d11Res->outputViews[1].push_back(view);
-					auto uav = CreateUnorderedAccessView(d3d11Res->device.Get(), tex.Get(), 1);
+					auto uav = CreateUnorderedAccessView(d3d11Res->device.Get(), resolvedTex.Get(), 1);
 					d3d11Res->outputUavs[1].push_back(uav);
 				}
 			}
@@ -190,5 +205,47 @@ namespace vrperfkit {
 
 		LOG_INFO << "D3D11 resource creation complete";
 		initialized = true;
+	}
+
+	void OculusManager::PostProcessD3D11(ovrLayerEyeFovDepth &eyeLayer) {
+		for (int eye = 0; eye < 2; ++eye) {
+			int index;
+			Check("getting current swapchain index", ovr_GetTextureSwapChainCurrentIndex(session, submittedEyeChains[eye], &index));
+			// since the current submitted texture has already been committed, the index will point past the current texture
+			index = (index - 1 + d3d11Res->submittedTextures[eye].size()) % d3d11Res->submittedTextures[eye].size();
+
+			// if the incoming texture is multi-sampled, we need to resolve it before we can post-process it
+			if (d3d11Res->multisampled[eye]) {
+				if (d3d11Res->usingArrayTex || submittedEyeChains[eye] != nullptr) {
+					D3D11_TEXTURE2D_DESC td;
+					d3d11Res->submittedTextures[eye][index]->GetDesc(&td);
+					d3d11Res->context->ResolveSubresource(
+						d3d11Res->resolveTexture[eye].Get(),
+						D3D11CalcSubresource(0, d3d11Res->usingArrayTex ? eye : 0, 1),
+						d3d11Res->submittedTextures[eye][index].Get(),
+						D3D11CalcSubresource(0, d3d11Res->usingArrayTex ? eye : 0, td.MipLevels),
+						TranslateTypelessFormats(td.Format));
+				}
+			}
+
+			D3D11PostProcessInput input;
+			input.inputTexture = d3d11Res->submittedTextures[eye][index].Get();
+			input.inputView = d3d11Res->submittedViews[eye][index].Get();
+			input.outputView = d3d11Res->outputViews[eye][index].Get();
+			input.outputUav = d3d11Res->outputUavs[eye][index].Get();
+			input.x = eyeLayer.Viewport[eye].Pos.x;
+			input.y = eyeLayer.Viewport[eye].Pos.y;
+			input.width = eyeLayer.Viewport[eye].Size.w;
+			input.height = eyeLayer.Viewport[eye].Size.h;
+			if (g_postprocess.ApplyD3D11(input)) {
+				eyeLayer.ColorTexture[eye] = outputEyeChains[eye];
+				g_postprocess.AdjustOutputResolution(input.x, input.y);
+				g_postprocess.AdjustOutputResolution(input.width, input.height);
+				eyeLayer.Viewport[eye].Pos.x = input.x;
+				eyeLayer.Viewport[eye].Pos.y = input.y;
+				eyeLayer.Viewport[eye].Size.w = input.width;
+				eyeLayer.Viewport[eye].Size.h = input.height;
+			}
+		}
 	}
 }

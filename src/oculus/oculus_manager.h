@@ -25,6 +25,8 @@ namespace vrperfkit {
 
 		std::unique_ptr<OculusD3D11Resources> d3d11Res;
 		void InitD3D11();
+
+		void PostProcessD3D11(ovrLayerEyeFovDepth &eyeLayer);
 	};
 
 	extern OculusManager g_oculus;
