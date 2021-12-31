@@ -82,3 +82,18 @@ OVR_PUBLIC_FUNCTION(void) ovr_GetLastErrorInfo(ovrErrorInfo* errorInfo) {
 	IMPL_ORIG(g_oculusDll, ovr_GetLastErrorInfo);
 	return orig_ovr_GetLastErrorInfo(errorInfo);
 }
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CreateTextureSwapChainDX(ovrSession session, IUnknown* d3dPtr, const ovrTextureSwapChainDesc* desc, ovrTextureSwapChain* out_TextureSwapChain) {
+	IMPL_ORIG(g_oculusDll, ovr_CreateTextureSwapChainDX);
+	return orig_ovr_CreateTextureSwapChainDX(session, d3dPtr, desc, out_TextureSwapChain);
+}
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainLength(ovrSession session, ovrTextureSwapChain chain, int* out_Length) {
+	IMPL_ORIG(g_oculusDll, ovr_GetTextureSwapChainLength);
+	return orig_ovr_GetTextureSwapChainLength(session, chain, out_Length);
+}
+
+OVR_PUBLIC_FUNCTION(void) ovr_DestroyTextureSwapChain(ovrSession session, ovrTextureSwapChain chain) {
+	IMPL_ORIG(g_oculusDll, ovr_DestroyTextureSwapChain);
+	return orig_ovr_DestroyTextureSwapChain(session, chain);
+}

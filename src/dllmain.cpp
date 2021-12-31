@@ -3,6 +3,7 @@
 #include "win_header_sane.h"
 #include "hooks.h"
 #include "oculus/oculus_hooks.h"
+#include "oculus/oculus_manager.h"
 #include "openvr/openvr_hooks.h"
 
 namespace fs = std::filesystem;
@@ -87,6 +88,13 @@ namespace {
 		vrperfkit::hooks::InstallHook("LoadLibraryExW", LoadLibraryExW, Hook_LoadLibraryExW);
 		InstallVrHooks();
 	}
+
+	void ShutdownVrPerfkit() {
+		LOG_INFO << "Shutting down\n";
+		vrperfkit::g_oculus.Shutdown();
+		vrperfkit::hooks::Shutdown();
+		vrperfkit::FlushLog();
+	}
 }
 
 BOOL WINAPI DllMain(HMODULE module, DWORD reason, LPVOID) {
@@ -96,8 +104,7 @@ BOOL WINAPI DllMain(HMODULE module, DWORD reason, LPVOID) {
 		break;
 
 	case DLL_PROCESS_DETACH:
-		LOG_INFO << "Shutting down\n";
-		vrperfkit::hooks::Shutdown();
+		ShutdownVrPerfkit();
 		break;
 	}
 

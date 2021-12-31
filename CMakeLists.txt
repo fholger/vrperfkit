@@ -35,6 +35,12 @@ set(OPENVR_FILES
 )
 source_group("openvr" ${OPENVR_FILES})
 
+set(D3D11_FILES
+	src/d3d11/d3d11_helper.h
+	src/d3d11/d3d11_helper.cpp
+)
+source_group("d3d11" ${D3D11_FILES})
+
 set(UPSCALING_FILES
 	src/upscaling/upscaling_mod.h
 	src/upscaling/upscaling_mod.cpp
@@ -45,6 +51,7 @@ set(MAIN_FILES
 	src/config.h
 	src/config.cpp
 	src/dllmain.cpp
+	src/graphics_apis.h
 	src/hooks.h
 	src/hooks.cpp
 	src/logging.h
@@ -57,6 +64,7 @@ set(PROJECT_FILES
 	${PROXY_FILES}
 	${OCULUS_FILES}
 	${OPENVR_FILES}
+	${D3D11_FILES}
 	${UPSCALING_FILES}
 	${MAIN_FILES}
 )
