@@ -2,6 +2,7 @@
 
 #include "logging.h"
 #include "post_processor.h"
+#include "resolution_scaling.h"
 #include "d3d11/d3d11_helper.h"
 
 #include <wrl/client.h>
@@ -150,12 +151,9 @@ namespace vrperfkit {
 			chainDesc.MipLevels = 1;
 			chainDesc.BindFlags = ovrTextureBind_DX_UnorderedAccess;
 			chainDesc.MiscFlags = ovrTextureMisc_None;
-			uint32_t w = chainDesc.Width, h = chainDesc.Height;
-			g_postprocess.AdjustOutputResolution(w, h);
-			LOG_INFO << "Submitted textures have resolution " << chainDesc.Width << "x" << chainDesc.Height
-					<< ", creating output textures of size " << w << "x" << h;
-			chainDesc.Width = w;
-			chainDesc.Height = h;
+			LOG_INFO << "Submitted textures have resolution " << chainDesc.Width << "x" << chainDesc.Height;
+			AdjustOutputResolution(chainDesc.Width, chainDesc.Height);
+			LOG_INFO << "Output resolution is " << chainDesc.Width << "x" << chainDesc.Height;
 			Check("creating output swapchain", ovr_CreateTextureSwapChainDX(session, d3d11Res->device.Get(), &chainDesc, &outputEyeChains[eye]));
 
 			Check("getting texture swapchain length", ovr_GetTextureSwapChainLength(session, outputEyeChains[eye], &length));
@@ -239,8 +237,8 @@ namespace vrperfkit {
 			input.height = eyeLayer.Viewport[eye].Size.h;
 			if (g_postprocess.ApplyD3D11(input)) {
 				eyeLayer.ColorTexture[eye] = outputEyeChains[eye];
-				g_postprocess.AdjustOutputResolution(input.x, input.y);
-				g_postprocess.AdjustOutputResolution(input.width, input.height);
+				AdjustOutputResolution(input.x, input.y);
+				AdjustOutputResolution(input.width, input.height);
 				eyeLayer.Viewport[eye].Pos.x = input.x;
 				eyeLayer.Viewport[eye].Pos.y = input.y;
 				eyeLayer.Viewport[eye].Size.w = input.width;

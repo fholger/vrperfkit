@@ -55,6 +55,8 @@ set(FSR_FILES
 	src/fsr/fsr_rcas.hlsl
 	src/fsr/ffx_a.h
 	src/fsr/ffx_fsr1.h
+	src/fsr/fsr_d3d11_upscaler.h
+	src/fsr/fsr_d3d11_upscaler.cpp
 )
 source_group("fsr" ${FSR_FILES})
 set_compute_shader(src/fsr/fsr_easu.hlsl "shader_fsr_easu.h" "g_FSRUpscaleShader")
@@ -71,6 +73,7 @@ set(MAIN_FILES
 	src/logging.cpp
 	src/post_processor.h
 	src/post_processor.cpp
+	src/resolution_scaling.h
 	src/win_header_sane.h
 )
 

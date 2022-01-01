@@ -4,7 +4,7 @@
 #include "oculus_manager.h"
 #include "win_header_sane.h"
 #include "OVR_CAPI.h"
-#include "post_processor.h"
+#include "resolution_scaling.h"
 
 namespace {
 	HMODULE g_oculusDll = nullptr;
@@ -12,12 +12,7 @@ namespace {
 	ovrSizei ovrHook_GetFovTextureSize(ovrSession session, ovrEyeType eye, ovrFovPort fov, float pixelsPerDisplayPixel) {
 		ovrSizei result = vrperfkit::hooks::CallOriginal(ovrHook_GetFovTextureSize)(session, eye, fov, pixelsPerDisplayPixel);
 		if (result.w > 0 && result.h > 0) {
-			uint32_t width = result.w;
-			uint32_t height = result.h;
-			vrperfkit::g_postprocess.AdjustInputResolution(width, height);
-			//LOG_DEBUG << "Render resolution adjusted from " << result.w << "x" << result.h << " to " << width << "x" << height;
-			result.w = width;
-			result.h = height;
+			vrperfkit::AdjustRenderResolution(result.w, result.h);
 		}
 		return result;
 	}
