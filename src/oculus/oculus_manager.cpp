@@ -151,10 +151,13 @@ namespace vrperfkit {
 			chainDesc.SampleCount = 1;
 			chainDesc.MipLevels = 1;
 			chainDesc.BindFlags = ovrTextureBind_DX_UnorderedAccess;
-			chainDesc.MiscFlags = ovrTextureMisc_None;
-			LOG_INFO << "Submitted textures have resolution " << chainDesc.Width << "x" << chainDesc.Height;
+			// fixme: may need some adjustments from actual types
+			chainDesc.MiscFlags = ovrTextureMisc_DX_Typeless;
+			chainDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM;
+			chainDesc.StaticImage = false;
+			LOG_INFO << "Eye " << eye << ": submitted textures have resolution " << chainDesc.Width << "x" << chainDesc.Height;
 			AdjustOutputResolution(chainDesc.Width, chainDesc.Height);
-			LOG_INFO << "Output resolution is " << chainDesc.Width << "x" << chainDesc.Height;
+			LOG_INFO << "Eye " << eye << ": output resolution is " << chainDesc.Width << "x" << chainDesc.Height;
 			Check("creating output swapchain", ovr_CreateTextureSwapChainDX(session, d3d11Res->device.Get(), &chainDesc, &outputEyeChains[eye]));
 
 			Check("getting texture swapchain length", ovr_GetTextureSwapChainLength(session, outputEyeChains[eye], &length));
@@ -229,11 +232,15 @@ namespace vrperfkit {
 				}
 			}
 
+			int outIndex = 0;
+			ovr_GetTextureSwapChainCurrentIndex(session, outputEyeChains[eye], &outIndex);
+
 			D3D11PostProcessInput input;
 			input.inputTexture = d3d11Res->submittedTextures[eye][index].Get();
 			input.inputView = d3d11Res->submittedViews[eye][index].Get();
-			input.outputView = d3d11Res->outputViews[eye][index].Get();
-			input.outputUav = d3d11Res->outputUavs[eye][index].Get();
+			input.outputTexture = d3d11Res->outputTextures[eye][outIndex].Get();
+			input.outputView = d3d11Res->outputViews[eye][outIndex].Get();
+			input.outputUav = d3d11Res->outputUavs[eye][outIndex].Get();
 			input.inputViewport.x = eyeLayer.Viewport[eye].Pos.x;
 			input.inputViewport.y = eyeLayer.Viewport[eye].Pos.y;
 			input.inputViewport.width = eyeLayer.Viewport[eye].Size.w;
@@ -251,6 +258,7 @@ namespace vrperfkit {
 
 			Viewport outputViewport;
 			if (d3d11Res->postProcessor->Apply(input, outputViewport)) {
+				ovr_CommitTextureSwapChain(session, outputEyeChains[eye]);
 				eyeLayer.ColorTexture[eye] = outputEyeChains[eye];
 				eyeLayer.Viewport[eye].Pos.x = outputViewport.x;
 				eyeLayer.Viewport[eye].Pos.y = outputViewport.y;

@@ -1,5 +1,7 @@
 #include "d3d11_helper.h"
 
+#include "logging.h"
+
 #include <sstream>
 
 namespace {
@@ -146,7 +148,7 @@ namespace vrperfkit {
 		texture->GetDesc(&td);
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC uavd;
-		uavd.Format = td.Format;
+		uavd.Format = TranslateTypelessFormats(td.Format);
 		if (td.ArraySize > 1) {
 			uavd.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
 			uavd.Texture2DArray.ArraySize = 1;
@@ -159,6 +161,7 @@ namespace vrperfkit {
 		}
 
 		ComPtr<ID3D11UnorderedAccessView> uav;
+		LOG_DEBUG << "Create UAV for texture of format " << uavd.Format << " and view dimension " << uavd.ViewDimension;
 		CheckResult("creating unordered access view", device->CreateUnorderedAccessView(texture, &uavd, uav.GetAddressOf()));
 		return uav;
 	}

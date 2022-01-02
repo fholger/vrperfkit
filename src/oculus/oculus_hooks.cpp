@@ -97,3 +97,8 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetTextureSwapChainCurrentIndex(ovrSession se
 	IMPL_ORIG(g_oculusDll, ovr_GetTextureSwapChainCurrentIndex);
 	return orig_ovr_GetTextureSwapChainCurrentIndex(session, chain, out_Index);
 }
+
+OVR_PUBLIC_FUNCTION(ovrResult) ovr_CommitTextureSwapChain(ovrSession session, ovrTextureSwapChain chain) {
+	IMPL_ORIG(g_oculusDll, ovr_CommitTextureSwapChain);
+	return orig_ovr_CommitTextureSwapChain(session, chain);
+}

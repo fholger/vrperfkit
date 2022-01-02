@@ -24,7 +24,7 @@ namespace vrperfkit {
 	struct SharpenShaderConstants {
 		AU1 const0[4]; // store output offset in final 2
 		AU1 projCentre[2];
-		AU1 radius;
+		AU1 squaredRadius;
 		AU1 _padding;		
 	};
 
@@ -61,7 +61,8 @@ namespace vrperfkit {
 		context->UpdateSubresource(constantsBuffer.Get(), 0, nullptr, &upscaleConstants, 0, 0);
 
 		UINT uavCount = -1;
-		context->CSSetUnorderedAccessViews(0, 1, upscaledUav.GetAddressOf(), &uavCount);
+		ID3D11UnorderedAccessView *uavs[] = {upscaledUav.Get()};
+		context->CSSetUnorderedAccessViews(0, 1, uavs, &uavCount);
 		context->CSSetConstantBuffers(0, 1, constantsBuffer.GetAddressOf());
 		ID3D11ShaderResourceView *srvs[1] = {input.inputView};
 		context->CSSetShaderResources(0, 1, srvs);
@@ -72,17 +73,18 @@ namespace vrperfkit {
 		// sharpening pass
 		SharpenShaderConstants sharpenConstants;
 		FsrRcasCon(sharpenConstants.const0, 2.f - 2 * g_config.upscaling.sharpness);
-		upscaleConstants.const3[2] = outputViewport.x;
-		upscaleConstants.const3[3] = outputViewport.y;
-		upscaleConstants.squaredRadius = outputViewport.height * outputViewport.height;
-		upscaleConstants.projCentre[0] = outputViewport.width / 2;
-		upscaleConstants.projCentre[1] = outputViewport.height / 2;
+		sharpenConstants.const0[2] = outputViewport.x;
+		sharpenConstants.const0[3] = outputViewport.y;
+		sharpenConstants.squaredRadius = outputViewport.height * outputViewport.height;
+		sharpenConstants.projCentre[0] = outputViewport.width / 2;
+		sharpenConstants.projCentre[1] = outputViewport.height / 2;
 		context->UpdateSubresource(constantsBuffer.Get(), 0, nullptr, &sharpenConstants, 0, 0);
 
-		ID3D11UnorderedAccessView * uavs[] = { input.outputUav };
+		uavs[0] = input.outputUav;
 		context->CSSetUnorderedAccessViews(0, 1, uavs, &uavCount);
 		context->CSSetConstantBuffers(0, 1, constantsBuffer.GetAddressOf());
-		context->CSSetShaderResources(0, 1, upscaledView.GetAddressOf());
+		srvs[0] = upscaledView.Get();
+		context->CSSetShaderResources(0, 1, srvs);
 		context->CSSetShader(sharpenShader.Get(), nullptr, 0);
 		context->Dispatch((outputViewport.width + 15) >> 4, (outputViewport.height + 15) >> 4, 1);
 	}
