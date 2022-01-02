@@ -1,9 +1,9 @@
 #include "oculus_manager.h"
 
 #include "logging.h"
-#include "post_processor.h"
 #include "resolution_scaling.h"
 #include "d3d11/d3d11_helper.h"
+#include "d3d11/d3d11_post_processor.h"
 
 #include <wrl/client.h>
 #include <d3d11.h>
@@ -27,6 +27,7 @@ namespace vrperfkit {
 	OculusManager g_oculus;
 
 	struct OculusD3D11Resources {
+		std::unique_ptr<D3D11PostProcessor> postProcessor;
 		ComPtr<ID3D11Device> device;
 		ComPtr<ID3D11DeviceContext> context;
 		std::vector<ComPtr<ID3D11Texture2D>> submittedTextures[2];
@@ -201,6 +202,8 @@ namespace vrperfkit {
 			}
 		}
 
+		d3d11Res->postProcessor.reset(new D3D11PostProcessor(d3d11Res->device));
+
 		LOG_INFO << "D3D11 resource creation complete";
 		initialized = true;
 	}
@@ -231,18 +234,28 @@ namespace vrperfkit {
 			input.inputView = d3d11Res->submittedViews[eye][index].Get();
 			input.outputView = d3d11Res->outputViews[eye][index].Get();
 			input.outputUav = d3d11Res->outputUavs[eye][index].Get();
-			input.x = eyeLayer.Viewport[eye].Pos.x;
-			input.y = eyeLayer.Viewport[eye].Pos.y;
-			input.width = eyeLayer.Viewport[eye].Size.w;
-			input.height = eyeLayer.Viewport[eye].Size.h;
-			if (g_postprocess.ApplyD3D11(input)) {
+			input.inputViewport.x = eyeLayer.Viewport[eye].Pos.x;
+			input.inputViewport.y = eyeLayer.Viewport[eye].Pos.y;
+			input.inputViewport.width = eyeLayer.Viewport[eye].Size.w;
+			input.inputViewport.height = eyeLayer.Viewport[eye].Size.h;
+			input.eye = eye;
+			if (submittedEyeChains[1] == nullptr || submittedEyeChains[1] == submittedEyeChains[0]) {
+				if (d3d11Res->usingArrayTex) {
+					input.mode = TextureMode::ARRAY;
+				} else {
+					input.mode = TextureMode::COMBINED;
+				}
+			} else {
+				input.mode = TextureMode::SINGLE;
+			}
+
+			Viewport outputViewport;
+			if (d3d11Res->postProcessor->Apply(input, outputViewport)) {
 				eyeLayer.ColorTexture[eye] = outputEyeChains[eye];
-				AdjustOutputResolution(input.x, input.y);
-				AdjustOutputResolution(input.width, input.height);
-				eyeLayer.Viewport[eye].Pos.x = input.x;
-				eyeLayer.Viewport[eye].Pos.y = input.y;
-				eyeLayer.Viewport[eye].Size.w = input.width;
-				eyeLayer.Viewport[eye].Size.h = input.height;
+				eyeLayer.Viewport[eye].Pos.x = outputViewport.x;
+				eyeLayer.Viewport[eye].Pos.y = outputViewport.y;
+				eyeLayer.Viewport[eye].Size.w = outputViewport.width;
+				eyeLayer.Viewport[eye].Size.h = outputViewport.height;
 			}
 		}
 	}

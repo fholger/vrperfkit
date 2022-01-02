@@ -1,5 +1,6 @@
 .vs
 CMakeSettings.json
 out
+build
 ThirdParty/LibOVR
 

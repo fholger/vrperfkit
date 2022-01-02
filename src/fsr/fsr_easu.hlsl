@@ -10,8 +10,9 @@ cbuffer cb : register(b0) {
 	uint4 Const1;
 	uint4 Const2;
 	uint4 Const3;
-	uint4 Centre;
-	uint4 Radius;
+	uint2 Centre;
+	uint  SquaredRadius;
+	uint  _padding;
 };
 
 SamplerState samLinearClamp : register(s0);
@@ -27,12 +28,13 @@ AF4 FsrEasuBF(AF2 p) { AF4 res = InputTexture.GatherBlue(samLinearClamp, p, int2
 void Upscale(int2 pos) {
 	AF3 c;
 	FsrEasuF(c, pos, Const0, Const1, Const2, Const3);
-	OutputTexture[pos] = AF4(c, 1);
+	OutputTexture[pos + Const3.zw] = AF4(c, 1);
 }
 
 void Bilinear(int2 pos) {
-	AF3 c = InputTexture.SampleLevel(samLinearClamp, float2(pos) / Radius.zw, 0).rgb;
-	OutputTexture[pos] = AF4(c, 1);
+	float2 samplePos = pos * AF2_AU2(Const0.xy) + AF2_AU2(Const0.zw) + 0.5;
+	AF3 c = InputTexture.SampleLevel(samLinearClamp, samplePos, 0).rgb;
+	OutputTexture[pos + Const3.zw] = AF4(c, 1);
 }
 
 [numthreads(64, 1, 1)]
@@ -40,9 +42,8 @@ void main(uint3 LocalThreadId : SV_GroupThreadID, uint3 WorkGroupId : SV_GroupID
 	// Do remapping of local xy in workgroup for a more PS-like swizzle pattern.
 	AU2 gxy = ARmp8x8(LocalThreadId.x) + AU2(WorkGroupId.x << 4u, WorkGroupId.y << 4u);
 	AU2 groupCentre = AU2((WorkGroupId.x << 4u) + 8u, (WorkGroupId.y << 4u) + 8u);
-	AU2 dc1 = Centre.xy - groupCentre;
-	AU2 dc2 = Centre.zw - groupCentre;
-	if (dot(dc1, dc1) <= Radius.y || dot(dc2, dc2) <= Radius.y) {
+	AU2 dc = Centre.xy - groupCentre;
+	if (dot(dc, dc) <= SquaredRadius) {
 		// only do the expensive EASU for workgroups inside the given radius
 		Upscale(gxy);
 		gxy.x += 8u;

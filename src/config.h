@@ -1,12 +1,9 @@
 #pragma once
+#include "types.h"
+
 #include <filesystem>
 
 namespace vrperfkit {
-	enum class UpscaleMethod {
-		FSR,
-		NIS,
-	};
-
 	struct UpscaleConfig {
 		bool enabled = false;
 		UpscaleMethod method = UpscaleMethod::FSR;

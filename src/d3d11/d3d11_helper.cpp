@@ -26,7 +26,36 @@ namespace vrperfkit {
 			throw std::exception(message.c_str());
 		}
 	}
-	
+
+	ComPtr<ID3D11Buffer> CreateConstantsBuffer(ID3D11Device *device, uint32_t size) {
+		D3D11_BUFFER_DESC bd;
+		bd.Usage = D3D11_USAGE_DEFAULT;
+		bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		bd.CPUAccessFlags = 0;
+		bd.MiscFlags = 0;
+		bd.StructureByteStride = 0;
+		bd.ByteWidth = size;
+		ComPtr<ID3D11Buffer> buffer;
+		CheckResult("creating constants buffer", device->CreateBuffer(&bd, nullptr, buffer.GetAddressOf()));
+		return buffer;
+	}
+
+	ComPtr<ID3D11SamplerState> CreateLinearSampler(ID3D11Device *device) {
+		D3D11_SAMPLER_DESC sd;
+		sd.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+		sd.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+		sd.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+		sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+		sd.MipLODBias = 0;
+		sd.MaxAnisotropy = 1;
+		sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		sd.MinLOD = 0;
+		sd.MaxLOD = 0;
+		ComPtr<ID3D11SamplerState> sampler;
+		CheckResult("creating sampler state", device->CreateSamplerState(&sd, sampler.GetAddressOf()));
+		return sampler;
+	}
+
 	DXGI_FORMAT TranslateTypelessFormats(DXGI_FORMAT format) {
 		switch (format) {
 		case DXGI_FORMAT_R32G32B32A32_TYPELESS:
@@ -44,6 +73,48 @@ namespace vrperfkit {
 		default:
 			return format;
 		}
+	}
+
+	void StoreD3D11State(ID3D11DeviceContext *context, D3D11State &state) {
+		context->VSGetShader(state.vertexShader.ReleaseAndGetAddressOf(), nullptr, nullptr);
+		context->PSGetShader(state.pixelShader.ReleaseAndGetAddressOf(), nullptr, nullptr);
+		context->CSGetShader(state.computeShader.ReleaseAndGetAddressOf(), nullptr, nullptr);
+		context->IAGetInputLayout( state.inputLayout.ReleaseAndGetAddressOf() );
+		context->IAGetPrimitiveTopology( &state.topology );
+		context->IAGetVertexBuffers( 0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT, state.vertexBuffers, state.strides, state.offsets );
+		context->IAGetIndexBuffer(state.indexBuffer.ReleaseAndGetAddressOf(), &state.format, &state.offset);
+		context->OMGetRenderTargets( D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, state.renderTargets, state.depthStencil.GetAddressOf() );
+		context->RSGetState( state.rasterizerState.ReleaseAndGetAddressOf() );
+		context->OMGetDepthStencilState( state.depthStencilState.ReleaseAndGetAddressOf(), &state.stencilRef );
+		context->RSGetViewports( &state.numViewports, nullptr );
+		context->RSGetViewports( &state.numViewports, state.viewports );
+		context->VSGetConstantBuffers( 0, 1, state.vsConstantBuffer.GetAddressOf() );
+		context->PSGetConstantBuffers( 0, 1, state.psConstantBuffer.GetAddressOf() );
+	}
+
+	void RestoreD3D11State(ID3D11DeviceContext *context, const D3D11State &state) {
+		context->VSSetShader(state.vertexShader.Get(), nullptr, 0);
+		context->PSSetShader(state.pixelShader.Get(), nullptr, 0);
+		context->CSSetShader(state.computeShader.Get(), nullptr, 0);
+		context->IASetInputLayout( state.inputLayout.Get() );
+		context->IASetPrimitiveTopology( state.topology );
+		context->IASetVertexBuffers( 0, D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT, state.vertexBuffers, state.strides, state.offsets );
+		for (int i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i) {
+			if (state.vertexBuffers[i])
+				state.vertexBuffers[i]->Release();
+		}
+		context->IASetIndexBuffer( state.indexBuffer.Get(), state.format, state.offset );
+		context->OMSetRenderTargets( D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, state.renderTargets, state.depthStencil.Get() );
+		for (int i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i) {
+			if (state.renderTargets[i]) {
+				state.renderTargets[i]->Release();
+			}
+		}
+		context->RSSetState( state.rasterizerState.Get() );
+		context->OMSetDepthStencilState( state.depthStencilState.Get(), state.stencilRef );
+		context->RSSetViewports( state.numViewports, state.viewports );
+		context->VSSetConstantBuffers( 0, 1, state.vsConstantBuffer.GetAddressOf() );
+		context->PSSetConstantBuffers( 0, 1, state.psConstantBuffer.GetAddressOf() );
 	}
 
 	ComPtr<ID3D11ShaderResourceView> CreateShaderResourceView(ID3D11Device *device, ID3D11Texture2D *texture, int arrayIndex) {
@@ -106,5 +177,23 @@ namespace vrperfkit {
 		ComPtr<ID3D11Texture2D> tex;
 		CheckResult("creating resolve texture", device->CreateTexture2D(&td, nullptr, tex.GetAddressOf()));
 		return tex;
+	}
+
+	ComPtr<ID3D11Texture2D> CreatePostProcessTexture(ID3D11Device *device, uint32_t width, uint32_t height, DXGI_FORMAT format) {
+		D3D11_TEXTURE2D_DESC td;
+		td.Width = width;
+		td.Height = height;
+		td.Format = format;
+		td.MipLevels = 1;
+		td.SampleDesc.Count = 1;
+		td.SampleDesc.Quality = 0;
+		td.ArraySize = 1;
+		td.Usage = D3D11_USAGE_DEFAULT;
+		td.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+		td.CPUAccessFlags = 0;
+		td.MiscFlags = 0;
+		ComPtr<ID3D11Texture2D> texture;
+		CheckResult("creating post-process texture", device->CreateTexture2D(&td, nullptr, texture.GetAddressOf()));
+		return texture;
 	}
 }

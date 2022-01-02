@@ -13,22 +13,22 @@ set(YAML_CPP_BUILD_TOOLS OFF)
 set(YAML_BUILD_SHARED_LIBS OFF)
 add_subdirectory(ThirdParty/yaml-cpp)
 
-function(set_compute_shader FILE OUT_FILE VAR_NAME)
-	set_property(SOURCE ${FILE} PROPERTY VS_SHADER_TPE Compute)
+macro(set_compute_shader FILE OUT_FILE VAR_NAME)
+	set_property(SOURCE ${FILE} PROPERTY VS_SHADER_TYPE "Compute")
 	set_property(SOURCE ${FILE} PROPERTY VS_SHADER_MODEL "5.0")
 	set_property(SOURCE ${FILE} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "${OUT_FILE}")
 	set_property(SOURCE ${FILE} PROPERTY VS_SHADER_VARIABLE_NAME "${VAR_NAME}")
-endfunction()
+endmacro()
 
 set(RESOURCE_FILES
 	resources/exports.def
 )
-source_group("resources" ${RESOURCE_FILES})
+source_group("resources" FILES ${RESOURCE_FILES})
 
 set(PROXY_FILES
 	src/proxy/dxgi.cpp
 )
-source_group("proxy" ${PROXY_FILES})
+source_group("proxy" FILES ${PROXY_FILES})
 
 set(OCULUS_FILES
 	src/oculus/oculus_hooks.h
@@ -36,29 +36,31 @@ set(OCULUS_FILES
 	src/oculus/oculus_manager.h
 	src/oculus/oculus_manager.cpp
 )
-source_group("oculus" ${OCULUS_FILES})
+source_group("oculus" FILES ${OCULUS_FILES})
 
 set(OPENVR_FILES
 	src/openvr/openvr_hooks.h
 	src/openvr/openvr_hooks.cpp
 )
-source_group("openvr" ${OPENVR_FILES})
+source_group("openvr" FILES ${OPENVR_FILES})
 
 set(D3D11_FILES
 	src/d3d11/d3d11_helper.h
 	src/d3d11/d3d11_helper.cpp
+	src/d3d11/d3d11_fsr_upscaler.h
+	src/d3d11/d3d11_fsr_upscaler.cpp
+	src/d3d11/d3d11_post_processor.h
+	src/d3d11/d3d11_post_processor.cpp
 )
-source_group("d3d11" ${D3D11_FILES})
+source_group("d3d11" FILES ${D3D11_FILES})
 
 set(FSR_FILES
 	src/fsr/fsr_easu.hlsl
 	src/fsr/fsr_rcas.hlsl
 	src/fsr/ffx_a.h
 	src/fsr/ffx_fsr1.h
-	src/fsr/fsr_d3d11_upscaler.h
-	src/fsr/fsr_d3d11_upscaler.cpp
 )
-source_group("fsr" ${FSR_FILES})
+source_group("fsr" FILES ${FSR_FILES})
 set_compute_shader(src/fsr/fsr_easu.hlsl "shader_fsr_easu.h" "g_FSRUpscaleShader")
 set_compute_shader(src/fsr/fsr_rcas.hlsl "shader_fsr_rcas.h" "g_FSRSharpenShader")
 
@@ -66,16 +68,15 @@ set(MAIN_FILES
 	src/config.h
 	src/config.cpp
 	src/dllmain.cpp
-	src/graphics_apis.h
 	src/hooks.h
 	src/hooks.cpp
 	src/logging.h
 	src/logging.cpp
-	src/post_processor.h
-	src/post_processor.cpp
 	src/resolution_scaling.h
+	src/types.h
 	src/win_header_sane.h
 )
+source_group("core" FILES ${MAIN_FILES})
 
 set(PROJECT_FILES
 	${RESOURCE_FILES}

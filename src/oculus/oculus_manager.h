@@ -1,6 +1,6 @@
 #pragma once
 #include "OVR_CAPI.h"
-#include "graphics_apis.h"
+#include "types.h"
 
 #include <memory>
 
