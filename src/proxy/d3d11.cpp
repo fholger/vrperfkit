@@ -1,36 +1,16 @@
 #include "logging.h"
+#include "proxy_helpers.h"
 #include "win_header_sane.h"
 #include <dxgi.h>
 #include <d3d11.h>
 
-namespace fs = std::filesystem;
-
 namespace {
 	HMODULE g_realDll = nullptr;
 
-	fs::path GetSystemPath() {
-		WCHAR buf[4096] = L"";
-		GetSystemDirectoryW(buf, ARRAYSIZE(buf));
-		return buf;
-	}
-
-	void EnsureLoadRealDll() {
-		if (g_realDll != nullptr) {
-			return;
-		}
-
-		fs::path realDllPath = GetSystemPath() / "d3d11.dll";
-		LOG_INFO << "Loading real DLL at " << realDllPath;
-		g_realDll = LoadLibraryW(realDllPath.c_str());
-		if (g_realDll == nullptr) {
-			LOG_ERROR << "Failed to load original DLL";
-		}
-	}
-
 	template<typename T>
 	T LoadRealFunction(T, const std::string &name) {
-		EnsureLoadRealDll();
-		return reinterpret_cast<T>(GetProcAddress(g_realDll, name.c_str()));
+		vrperfkit::EnsureLoadDll(g_realDll, "d3d11.dll");
+		return reinterpret_cast<T>(vrperfkit::GetDllFunctionPointer(g_realDll, name));
 	}
 }
 
