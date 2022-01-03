@@ -25,7 +25,7 @@ namespace vrperfkit {
 		AU1 const0[4]; // store output offset in final 2
 		AU1 projCentre[2];
 		AU1 squaredRadius;
-		AU1 _padding;		
+		AU1 debugMode;
 	};
 
 	D3D11FsrUpscaler::D3D11FsrUpscaler(ID3D11Device *device, uint32_t outputWidth, uint32_t outputHeight, DXGI_FORMAT format) {
@@ -50,6 +50,7 @@ namespace vrperfkit {
 		ID3D11ShaderResourceView *srvs[1] = {input.inputView};
 		UINT uavCount = -1;
 		ID3D11UnorderedAccessView *uavs[] = {upscaledUav.Get()};
+		float radius = g_config.upscaling.radius * outputViewport.height;
 
 		if (input.inputViewport != outputViewport) {
 			// upscaling pass
@@ -60,8 +61,7 @@ namespace vrperfkit {
 				input.inputViewport.x, input.inputViewport.y);
 			upscaleConstants.const3[2] = outputViewport.x;
 			upscaleConstants.const3[3] = outputViewport.y;
-			// fixme
-			upscaleConstants.squaredRadius = outputViewport.height * outputViewport.height;
+			upscaleConstants.squaredRadius = radius * radius;
 			upscaleConstants.projCentre[0] = outputViewport.width / 2;
 			upscaleConstants.projCentre[1] = outputViewport.height / 2;
 			context->UpdateSubresource(constantsBuffer.Get(), 0, nullptr, &upscaleConstants, 0, 0);
@@ -79,9 +79,10 @@ namespace vrperfkit {
 		FsrRcasCon(sharpenConstants.const0, 2.f - 2 * g_config.upscaling.sharpness);
 		sharpenConstants.const0[2] = outputViewport.x;
 		sharpenConstants.const0[3] = outputViewport.y;
-		sharpenConstants.squaredRadius = outputViewport.height * outputViewport.height;
+		sharpenConstants.squaredRadius = radius * radius;
 		sharpenConstants.projCentre[0] = outputViewport.width / 2;
 		sharpenConstants.projCentre[1] = outputViewport.height / 2;
+		sharpenConstants.debugMode = g_config.debugMode ? 1 : 0;
 		context->UpdateSubresource(constantsBuffer.Get(), 0, nullptr, &sharpenConstants, 0, 0);
 
 		uavs[0] = input.outputUav;

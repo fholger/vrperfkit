@@ -32,7 +32,7 @@ void Upscale(int2 pos) {
 }
 
 void Bilinear(int2 pos) {
-	float2 samplePos = pos * AF2_AU2(Const0.xy) + AF2_AU2(Const0.zw) + 0.5;
+	float2 samplePos = AF2_AU2(Const1.xy) * (AF2(pos) * AF2_AU2(Const0.xy) + AF2_AU2(Const0.zw) + 0.5);
 	AF3 c = InputTexture.SampleLevel(samLinearClamp, samplePos, 0).rgb;
 	OutputTexture[pos + Const3.zw] = AF4(c, 1);
 }
