@@ -31,6 +31,7 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryA)(lpFileName);
 
 		if (handle != nullptr && handle != g_module) {
+			LOG_DEBUG << "LoadLibraryA " << lpFileName;
 			InstallVrHooks();
 		}
 
@@ -41,6 +42,7 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryExA)(lpFileName, hFile, dwFlags);
 
 		if (handle != nullptr && handle != g_module && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
+			LOG_DEBUG << "LoadLibraryExA " << lpFileName;
 			InstallVrHooks();
 		}
 
@@ -51,6 +53,7 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryW)(lpFileName);
 
 		if (handle != nullptr && handle != g_module) {
+			LOG_DEBUG << "LoadLibraryW " << lpFileName;
 			InstallVrHooks();
 		}
 
@@ -61,6 +64,7 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryExW)(lpFileName, hFile, dwFlags);
 
 		if (handle != nullptr && handle != g_module && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
+			LOG_DEBUG << "LoadLibraryExW " << lpFileName;
 			InstallVrHooks();
 		}
 
