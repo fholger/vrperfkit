@@ -14,6 +14,7 @@ namespace vrperfkit {
 		Viewport inputViewport;
 		int eye;
 		TextureMode mode;
+		Point<float> projectionCenter;
 	};
 
 	class D3D11Upscaler {

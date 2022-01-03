@@ -62,8 +62,8 @@ namespace vrperfkit {
 			upscaleConstants.const3[2] = outputViewport.x;
 			upscaleConstants.const3[3] = outputViewport.y;
 			upscaleConstants.squaredRadius = radius * radius;
-			upscaleConstants.projCentre[0] = outputViewport.width / 2;
-			upscaleConstants.projCentre[1] = outputViewport.height / 2;
+			upscaleConstants.projCentre[0] = outputViewport.width * input.projectionCenter.x;
+			upscaleConstants.projCentre[1] = outputViewport.height * input.projectionCenter.y;
 			context->UpdateSubresource(constantsBuffer.Get(), 0, nullptr, &upscaleConstants, 0, 0);
 
 			context->CSSetUnorderedAccessViews(0, 1, uavs, &uavCount);
@@ -80,8 +80,8 @@ namespace vrperfkit {
 		sharpenConstants.const0[2] = outputViewport.x;
 		sharpenConstants.const0[3] = outputViewport.y;
 		sharpenConstants.squaredRadius = radius * radius;
-		sharpenConstants.projCentre[0] = outputViewport.width / 2;
-		sharpenConstants.projCentre[1] = outputViewport.height / 2;
+		sharpenConstants.projCentre[0] = outputViewport.width * input.projectionCenter.x;
+		sharpenConstants.projCentre[1] = outputViewport.height * input.projectionCenter.y;
 		sharpenConstants.debugMode = g_config.debugMode ? 1 : 0;
 		context->UpdateSubresource(constantsBuffer.Get(), 0, nullptr, &sharpenConstants, 0, 0);
 

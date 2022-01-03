@@ -112,6 +112,15 @@ namespace vrperfkit {
 		}
 	}
 
+	ProjectionCenters OculusManager::CalculateProjectionCenter(const ovrFovPort *fov) {
+		ProjectionCenters projCenters;
+		for (int eye = 0; eye < 2; ++eye) {
+			projCenters.eyeCenter[eye].x = 0.5f * (1.f + (fov[eye].LeftTan - fov[eye].RightTan) / (fov[eye].RightTan + fov[eye].LeftTan));
+			projCenters.eyeCenter[eye].y = 0.5f * (1.f + (fov[eye].DownTan - fov[eye].UpTan) / (fov[eye].DownTan + fov[eye].UpTan));
+		}
+		return projCenters;
+	}
+
 	void OculusManager::InitD3D11() {
 		LOG_INFO << "Game is using D3D11 swapchains, initializing D3D11 resources";
 		graphicsApi = GraphicsApi::D3D11;
@@ -212,6 +221,8 @@ namespace vrperfkit {
 	}
 
 	void OculusManager::PostProcessD3D11(ovrLayerEyeFovDepth &eyeLayer) {
+		auto projCenters = CalculateProjectionCenter(eyeLayer.Fov);
+
 		for (int eye = 0; eye < 2; ++eye) {
 			int index;
 			Check("getting current swapchain index", ovr_GetTextureSwapChainCurrentIndex(session, submittedEyeChains[eye], &index));
@@ -246,6 +257,7 @@ namespace vrperfkit {
 			input.inputViewport.width = eyeLayer.Viewport[eye].Size.w;
 			input.inputViewport.height = eyeLayer.Viewport[eye].Size.h;
 			input.eye = eye;
+			input.projectionCenter = projCenters.eyeCenter[eye];
 			if (submittedEyeChains[1] == nullptr || submittedEyeChains[1] == submittedEyeChains[0]) {
 				if (d3d11Res->usingArrayTex) {
 					input.mode = TextureMode::ARRAY;

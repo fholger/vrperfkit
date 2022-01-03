@@ -34,6 +34,16 @@ namespace vrperfkit {
 		}
 	};
 
+	template<typename Num>
+	struct Point {
+		Num x;
+		Num y;
+	};
+
+	struct ProjectionCenters {
+		Point<float> eyeCenter[2];
+	};
+
 	enum class UpscaleMethod {
 		FSR,
 		NIS,

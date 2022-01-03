@@ -23,6 +23,8 @@ namespace vrperfkit {
 		ovrTextureSwapChain submittedEyeChains[2] = { nullptr, nullptr };
 		ovrTextureSwapChain outputEyeChains[2] = { nullptr, nullptr };
 
+		ProjectionCenters CalculateProjectionCenter(const ovrFovPort *fov);
+
 		std::unique_ptr<OculusD3D11Resources> d3d11Res;
 		void InitD3D11();
 
