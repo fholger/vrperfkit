@@ -50,7 +50,7 @@ namespace vrperfkit {
 		ID3D11ShaderResourceView *srvs[1] = {input.inputView};
 		UINT uavCount = -1;
 		ID3D11UnorderedAccessView *uavs[] = {upscaledUav.Get()};
-		float radius = g_config.upscaling.radius * outputViewport.height;
+		float radius = 0.5f * g_config.upscaling.radius * outputViewport.height;
 
 		if (input.inputViewport != outputViewport) {
 			// upscaling pass
