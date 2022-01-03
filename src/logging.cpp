@@ -26,7 +26,7 @@ namespace vrperfkit {
 		std::time_t now = std::time(nullptr);
 		tm localTime;
 		localtime_s(&localTime, &now);
-		std::strftime(timeBuf, sizeof(timeBuf), "%H:%M:%S ", &localTime);
+		std::strftime(timeBuf, sizeof(timeBuf), "%H:%M:%S", &localTime);
 
 		g_logMutex.lock();
 		g_logFile << timeBuf << " " << prefix;

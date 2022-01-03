@@ -2,10 +2,10 @@
 #include <codecvt>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
+#include "config.h"
 
-#define LOG_INFO vrperfkit::LogMessage()
-#define LOG_DEBUG vrperfkit::LogMessage("(DEBUG) ")
+#define LOG_INFO vrperfkit::LogMessage("", true)
+#define LOG_DEBUG if (vrperfkit::g_config.debugMode) vrperfkit::LogMessage("(DEBUG) ")
 #define LOG_ERROR vrperfkit::LogMessage("(!) ERROR: ", true)
 
 namespace vrperfkit {
@@ -29,6 +29,10 @@ namespace vrperfkit {
 		LogMessage& operator<<(const std::wstring &str) {
 			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
 			return *this << conv.to_bytes(str);
+		}
+
+		LogMessage& operator<<(const wchar_t *msg) {
+			return *this << std::wstring(msg);
 		}
 
 	private:

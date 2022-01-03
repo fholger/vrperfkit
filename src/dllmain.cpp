@@ -76,16 +76,15 @@ namespace {
 		LOG_INFO << "======================";
 		LOG_INFO << "VR Performance Toolkit";
 		LOG_INFO << "======================\n";
-		vrperfkit::FlushLog();
 
 		vrperfkit::LoadConfig(g_basePath / "vrperfkit.yml");
 		vrperfkit::PrintCurrentConfig();
 
 		vrperfkit::hooks::Init();
-		vrperfkit::hooks::InstallHook("LoadLibraryA", LoadLibraryA, Hook_LoadLibraryA);
-		vrperfkit::hooks::InstallHook("LoadLibraryExA", LoadLibraryExA, Hook_LoadLibraryExA);
-		vrperfkit::hooks::InstallHook("LoadLibraryW", LoadLibraryW, Hook_LoadLibraryW);
-		vrperfkit::hooks::InstallHook("LoadLibraryExW", LoadLibraryExW, Hook_LoadLibraryExW);
+		vrperfkit::hooks::InstallHook("LoadLibraryA", (void*)&LoadLibraryA, (void*)&Hook_LoadLibraryA);
+		vrperfkit::hooks::InstallHook("LoadLibraryExA", (void*)&LoadLibraryExA, (void*)&Hook_LoadLibraryExA);
+		vrperfkit::hooks::InstallHook("LoadLibraryW", (void*)LoadLibraryW, (void*)Hook_LoadLibraryW);
+		vrperfkit::hooks::InstallHook("LoadLibraryExW", (void*)&LoadLibraryExW, (void*)&Hook_LoadLibraryExW);
 		InstallVrHooks();
 	}
 

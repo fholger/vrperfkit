@@ -56,8 +56,8 @@ namespace vrperfkit {
 		}
 
 		LOG_INFO << dllName << " is loaded in the process, installing hooks...";
-		hooks::InstallHookInDll("ovr_GetFovTextureSize", handle, ovrHook_GetFovTextureSize);
-		hooks::InstallHookInDll("ovr_EndFrame", handle, ovrHook_EndFrame);
+		hooks::InstallHookInDll("ovr_GetFovTextureSize", handle, (void*)ovrHook_GetFovTextureSize);
+		hooks::InstallHookInDll("ovr_EndFrame", handle, (void*)ovrHook_EndFrame);
 
 		g_oculusDll = handle;
 	}

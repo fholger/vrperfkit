@@ -38,7 +38,7 @@ namespace vrperfkit {
 		}
 
 		void InstallHook(const std::string &name, void *target, void *detour) {
-			LOG_INFO << "Installing hook for " << name;
+			LOG_INFO << "Installing hook for " << name << " from " << target << " to " << detour;
 			LPVOID pOriginal = nullptr;
 			if (MH_CreateHook(target, detour, &pOriginal) != MH_OK || MH_EnableHook(target) != MH_OK) {
 				LOG_ERROR << "Failed to install hook for " << name;

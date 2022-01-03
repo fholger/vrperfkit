@@ -30,7 +30,7 @@ namespace vrperfkit {
 		}
 
 		LOG_INFO << dllName << " is loaded in the process, installing hooks...";
-		hooks::InstallHookInDll("VRClientCoreFactory", handle, Hook_VRClientCoreFactory);
+		hooks::InstallHookInDll("VRClientCoreFactory", handle, (void*)Hook_VRClientCoreFactory);
 
 		hooksLoaded = true;
 	}
