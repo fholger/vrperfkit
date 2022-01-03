@@ -101,4 +101,6 @@ extern "C" {
 		LOAD_REAL_FUNC(DXGIReportAdapterConfiguration);
 		return realFunc(a);
 	}
+
+	void WINAPI DXGID3D10ETWRundown() {}
 }
