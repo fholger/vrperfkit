@@ -4,7 +4,11 @@
 #include "d3d11_fsr_upscaler.h"
 
 namespace vrperfkit {
-	D3D11PostProcessor::D3D11PostProcessor(ComPtr<ID3D11Device> device) : device(device) {}
+	D3D11PostProcessor::D3D11PostProcessor(ComPtr<ID3D11Device> device) : device(device) {
+		ComPtr<ID3D11DeviceContext> context;
+		device->GetImmediateContext(context.GetAddressOf());
+		context->SetPrivateData(__uuidof(D3D11PostProcessor), sizeof(this), this);
+	}
 
 	bool D3D11PostProcessor::Apply(const D3D11PostProcessInput &input, Viewport &outputViewport) {
 		if (g_config.upscaling.enabled) {

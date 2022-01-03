@@ -22,7 +22,7 @@ namespace vrperfkit {
 		virtual void Upscale(const D3D11PostProcessInput &input, const Viewport &outputViewport) = 0;
 	};
 
-	class D3D11PostProcessor {
+	class __declspec(uuid("eca6ea48-d763-48b9-8181-4e316335ad97")) D3D11PostProcessor {
 	public:
 		D3D11PostProcessor(ComPtr<ID3D11Device> device);
 		bool Apply(const D3D11PostProcessInput &input, Viewport &outputViewport);
