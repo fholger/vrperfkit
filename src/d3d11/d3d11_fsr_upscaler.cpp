@@ -46,29 +46,33 @@ namespace vrperfkit {
 		D3D11_TEXTURE2D_DESC td;
 		input.inputTexture->GetDesc(&td);
 
-		// upscaling pass
-		UpscaleShaderConstants upscaleConstants;
-		FsrEasuConOffset(upscaleConstants.const0, upscaleConstants.const1, upscaleConstants.const2, upscaleConstants.const3,
-			input.inputViewport.width, input.inputViewport.height, td.Width, td.Height,
-			outputViewport.width, outputViewport.height,
-			input.inputViewport.x, input.inputViewport.y);
-		upscaleConstants.const3[2] = outputViewport.x;
-		upscaleConstants.const3[3] = outputViewport.y;
-		// fixme
-		upscaleConstants.squaredRadius = outputViewport.height * outputViewport.height;
-		upscaleConstants.projCentre[0] = outputViewport.width / 2;
-		upscaleConstants.projCentre[1] = outputViewport.height / 2;
-		context->UpdateSubresource(constantsBuffer.Get(), 0, nullptr, &upscaleConstants, 0, 0);
-
+		context->CSSetSamplers(0, 1, sampler.GetAddressOf());
+		ID3D11ShaderResourceView *srvs[1] = {input.inputView};
 		UINT uavCount = -1;
 		ID3D11UnorderedAccessView *uavs[] = {upscaledUav.Get()};
-		context->CSSetUnorderedAccessViews(0, 1, uavs, &uavCount);
-		context->CSSetConstantBuffers(0, 1, constantsBuffer.GetAddressOf());
-		ID3D11ShaderResourceView *srvs[1] = {input.inputView};
-		context->CSSetShaderResources(0, 1, srvs);
-		context->CSSetShader(upscaleShader.Get(), nullptr, 0);
-		context->CSSetSamplers(0, 1, sampler.GetAddressOf());
-		context->Dispatch((outputViewport.width + 15) >> 4, (outputViewport.height + 15) >> 4, 1);
+
+		if (input.inputViewport != outputViewport) {
+			// upscaling pass
+			UpscaleShaderConstants upscaleConstants;
+			FsrEasuConOffset(upscaleConstants.const0, upscaleConstants.const1, upscaleConstants.const2, upscaleConstants.const3,
+				input.inputViewport.width, input.inputViewport.height, td.Width, td.Height,
+				outputViewport.width, outputViewport.height,
+				input.inputViewport.x, input.inputViewport.y);
+			upscaleConstants.const3[2] = outputViewport.x;
+			upscaleConstants.const3[3] = outputViewport.y;
+			// fixme
+			upscaleConstants.squaredRadius = outputViewport.height * outputViewport.height;
+			upscaleConstants.projCentre[0] = outputViewport.width / 2;
+			upscaleConstants.projCentre[1] = outputViewport.height / 2;
+			context->UpdateSubresource(constantsBuffer.Get(), 0, nullptr, &upscaleConstants, 0, 0);
+
+			context->CSSetUnorderedAccessViews(0, 1, uavs, &uavCount);
+			context->CSSetConstantBuffers(0, 1, constantsBuffer.GetAddressOf());
+			context->CSSetShaderResources(0, 1, srvs);
+			context->CSSetShader(upscaleShader.Get(), nullptr, 0);
+			context->Dispatch((outputViewport.width + 15) >> 4, (outputViewport.height + 15) >> 4, 1);
+			srvs[0] = upscaledView.Get();
+		}
 
 		// sharpening pass
 		SharpenShaderConstants sharpenConstants;
@@ -83,7 +87,6 @@ namespace vrperfkit {
 		uavs[0] = input.outputUav;
 		context->CSSetUnorderedAccessViews(0, 1, uavs, &uavCount);
 		context->CSSetConstantBuffers(0, 1, constantsBuffer.GetAddressOf());
-		srvs[0] = upscaledView.Get();
 		context->CSSetShaderResources(0, 1, srvs);
 		context->CSSetShader(sharpenShader.Get(), nullptr, 0);
 		context->Dispatch((outputViewport.width + 15) >> 4, (outputViewport.height + 15) >> 4, 1);

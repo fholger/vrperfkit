@@ -44,7 +44,7 @@ void main(uint3 LocalThreadId : SV_GroupThreadID, uint3 WorkGroupId : SV_GroupID
 		pos.x -= 8u;
 		Sharpen(pos);
 	} else {
-		AF4 mul = AF4(1, 1, 1, 1); // - Const0[3] * AF4(0, 0.3, 0.3, 0);
+		AF4 mul = AF4(1, 1, 1, 1) - Const0[3] * AF4(0, 0.3, 0.3, 0);
 		OutputTexture[pos] = mul * InputTexture[pos];
 		pos.x += 8u;
 		OutputTexture[pos] = mul * InputTexture[pos];

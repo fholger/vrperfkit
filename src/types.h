@@ -24,6 +24,14 @@ namespace vrperfkit {
 		uint32_t y;
 		uint32_t width;
 		uint32_t height;
+
+		const bool operator==(const Viewport &o) const {
+			return x == o.x && y == o.y && width == o.width && height == o.height;
+		}
+
+		const bool operator !=(const Viewport &o) const {
+			return !(*this == o);
+		}
 	};
 
 	enum class UpscaleMethod {
