@@ -7,3 +7,11 @@ upscaling:
   applyMipBias: true
 
 debugMode: false
+
+hotkeys:
+  enabled: true
+  toggleDebugMode: ["ctrl", "f1"]
+  increaseUpscalingRadius: ["ctrl", "f2"]
+  decreaseUpscalingRadius: ["ctrl", "f3"]
+  increaseUpscalingSharpness: ["ctrl", "f4"]
+  decreaseUpscalingSharpness: ["ctrl", "f5"]

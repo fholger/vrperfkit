@@ -71,6 +71,8 @@ set(MAIN_FILES
 	src/config.h
 	src/config.cpp
 	src/dllmain.cpp
+	src/hotkeys.h
+	src/hotkeys.cpp
 	src/hooks.h
 	src/hooks.cpp
 	src/logging.h

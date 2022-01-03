@@ -2,6 +2,7 @@
 #include "logging.h"
 #include "win_header_sane.h"
 #include "hooks.h"
+#include "hotkeys.h"
 #include "oculus/oculus_hooks.h"
 #include "oculus/oculus_manager.h"
 #include "openvr/openvr_hooks.h"
@@ -78,7 +79,9 @@ namespace {
 		LOG_INFO << "======================\n";
 
 		vrperfkit::LoadConfig(g_basePath / "vrperfkit.yml");
+		vrperfkit::LoadHotkeys(g_basePath / "vrperfkit.yml");
 		vrperfkit::PrintCurrentConfig();
+		vrperfkit::PrintHotkeys();
 
 		vrperfkit::hooks::Init();
 		vrperfkit::hooks::InstallHook("LoadLibraryA", (void*)&LoadLibraryA, (void*)&Hook_LoadLibraryA);

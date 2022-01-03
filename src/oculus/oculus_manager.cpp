@@ -1,5 +1,6 @@
 #include "oculus_manager.h"
 
+#include "hotkeys.h"
 #include "logging.h"
 #include "resolution_scaling.h"
 #include "d3d11/d3d11_helper.h"
@@ -104,6 +105,8 @@ namespace vrperfkit {
 			if (graphicsApi == GraphicsApi::D3D11) {
 				PostProcessD3D11(eyeLayer);
 			}
+
+			CheckHotkeys();
 		}
 		catch (const std::exception &e) {
 			LOG_ERROR << "Failed during post processing: " << e.what();
