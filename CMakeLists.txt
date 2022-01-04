@@ -28,6 +28,7 @@ source_group("resources" FILES ${RESOURCE_FILES})
 set(PROXY_FILES
 	src/proxy/dxgi.cpp
 	src/proxy/d3d11.cpp
+	src/proxy/openvr.cpp
 	src/proxy/proxy_helpers.cpp
 	src/proxy/proxy_helpers.h
 )

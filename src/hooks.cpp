@@ -42,6 +42,16 @@ namespace vrperfkit {
 			g_hooksToOriginal[reinterpret_cast<intptr_t>(detour)] = reinterpret_cast<intptr_t>(pOriginal);
 		}
 
+		void RemoveHook(void *detour) {
+			auto entry = g_hooksToOriginal.find(reinterpret_cast<intptr_t>(detour));
+			if (entry != g_hooksToOriginal.end()) {
+				void *target = reinterpret_cast<void *>(entry->second);
+				MH_DisableHook(target);
+				MH_RemoveHook(target);
+				g_hooksToOriginal.erase(entry);
+			}
+		}
+
 		void InstallHook(const std::string &name, void *target, void *detour) {
 			LOG_INFO << "Installing hook for " << name << " from " << target << " to " << detour;
 			LPVOID pOriginal = nullptr;
