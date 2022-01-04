@@ -98,6 +98,7 @@ include_directories(
 	ThirdParty/minhook/include
 	ThirdParty/yaml-cpp/include
 	ThirdParty/LibOVR/include
+	ThirdParty/openvr
 	${CMAKE_CURRENT_BINARY_DIR}
 )
 
