@@ -29,8 +29,13 @@ namespace vrperfkit {
 			LPVOID pTarget = vtable[methodPos];
 
 			LPVOID pOriginal = nullptr;
-			if (MH_CreateHook(pTarget, detour, &pOriginal) != MH_OK || MH_EnableHook(pTarget) != MH_OK) {
-				LOG_ERROR << "Failed to install hook for " << name;
+			MH_STATUS result = MH_CreateHook(pTarget, detour, &pOriginal);
+			if (result != MH_OK || MH_EnableHook(pTarget) != MH_OK) {
+				if (result == MH_ERROR_ALREADY_CREATED) {
+					LOG_INFO << "  Hook already installed.";
+				} else {
+					LOG_ERROR << "Failed to install hook for " << name;
+				}
 				return;
 			}
 

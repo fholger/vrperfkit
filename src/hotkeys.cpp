@@ -36,6 +36,11 @@ namespace {
 		LOG_INFO << "Debug mode is now " << (g_config.debugMode ? "enabled" : "disabled");
 	}
 
+	void ToggleUpscalingApplyMipBias() {
+		g_config.upscaling.applyMipBias = !g_config.upscaling.applyMipBias;
+		LOG_INFO << "MIP LOD bias is now " << (g_config.upscaling.applyMipBias ? "enabled" : "disabled");
+	}
+
 	struct HotkeyDefinition {
 		std::string name;
 		std::function<void()> action;
@@ -50,6 +55,7 @@ namespace {
 			{"increaseUpscalingSharpness", IncreaseUpscalingSharpness},
 			{"decreaseUpscalingSharpness", DecreaseUpscalingSharpness},
 			{"toggleDebugMode", ToggleDebugMode},
+			{"toggleUpscalingApplyMipBias", ToggleUpscalingApplyMipBias},
 		};
 	}
 
