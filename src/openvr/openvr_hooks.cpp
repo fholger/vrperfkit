@@ -3,13 +3,16 @@
 #include "logging.h"
 #include "win_header_sane.h"
 #include "openvr.h"
+#include "openvr_manager.h"
 
 namespace vrperfkit {
 	extern HMODULE g_module;
 
 	namespace {
 		vr::EVRCompositorError IVRCompositor012Hook_Submit(vr::EVREye eEye, const vr::Texture_t *pTexture, const vr::VRTextureBounds_t *pBounds, vr::EVRSubmitFlags nSubmitFlags) {
-			auto error = hooks::CallOriginal(IVRCompositor012Hook_Submit)(eEye, pTexture, pBounds, nSubmitFlags);
+			OpenVrSubmitInfo info { eEye, pTexture, pBounds, nSubmitFlags };
+			g_openVr.OnSubmit(info);
+			auto error = hooks::CallOriginal(IVRCompositor012Hook_Submit)(info.eye, info.texture, info.bounds, info.submitFlags);
 			return error;
 		}
 

@@ -16,6 +16,8 @@ namespace vrperfkit {
 	ComPtr<ID3D11SamplerState> CreateLinearSampler(ID3D11Device *device);
 
 	DXGI_FORMAT TranslateTypelessFormats(DXGI_FORMAT format);
+	DXGI_FORMAT MakeSrgbFormatsTypeless(DXGI_FORMAT format);
+	bool IsSrgbFormat(DXGI_FORMAT format);
 
 	struct D3D11State {
 		ComPtr<ID3D11VertexShader> vertexShader;

@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(BUILD_TESTING OFF)
+set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(ThirdParty/minhook)
 
 set(YAML_CPP_BUILD_CONTRIB OFF)
@@ -45,6 +47,8 @@ source_group("oculus" FILES ${OCULUS_FILES})
 set(OPENVR_FILES
 	src/openvr/openvr_hooks.h
 	src/openvr/openvr_hooks.cpp
+	src/openvr/openvr_manager.h
+	src/openvr/openvr_manager.cpp
 )
 source_group("openvr" FILES ${OPENVR_FILES})
 
