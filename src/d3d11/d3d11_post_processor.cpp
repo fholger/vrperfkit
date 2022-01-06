@@ -32,6 +32,14 @@ namespace vrperfkit {
 	bool D3D11PostProcessor::Apply(const D3D11PostProcessInput &input, Viewport &outputViewport) {
 		if (g_config.upscaling.enabled) {
 			try {
+				ComPtr<ID3D11DeviceContext> context;
+				device->GetImmediateContext(context.GetAddressOf());
+				D3D11State previousState;
+				StoreD3D11State(context.Get(), previousState);
+
+				// disable any RTs in case our input texture is still bound; otherwise using it as a view will fail
+				context->OMSetRenderTargets(0, nullptr, nullptr);
+
 				PrepareUpscaler(input.outputTexture);
 				D3D11_TEXTURE2D_DESC td;
 				input.outputTexture->GetDesc(&td);
@@ -53,6 +61,8 @@ namespace vrperfkit {
 					mappedSamplers.clear();
 					mipLodBias = newLodBias;
 				}
+
+				RestoreD3D11State(context.Get(), previousState);
 
 				return true;
 			}

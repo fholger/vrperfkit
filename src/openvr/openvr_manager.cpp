@@ -1,5 +1,6 @@
 #include "openvr_manager.h"
 
+#include "hotkeys.h"
 #include "logging.h"
 #include "openvr_hooks.h"
 #include "resolution_scaling.h"
@@ -131,6 +132,8 @@ namespace vrperfkit {
 			Shutdown();
 			failed = true;
 		}
+
+		CheckHotkeys();
 	}
 
 	void OpenVrManager::EnsureInit(const OpenVrSubmitInfo &info) {
