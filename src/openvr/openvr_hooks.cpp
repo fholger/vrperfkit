@@ -24,26 +24,26 @@ namespace vrperfkit {
 			AdjustRenderResolution(*pnWidth, *pnHeight);
 		}
 
-		vr::EVRCompositorError IVRCompositor009Hook_Submit(vr::EVREye eEye, const vr::Texture_t *pTexture, const vr::VRTextureBounds_t *pBounds, vr::EVRSubmitFlags nSubmitFlags) {
+		vr::EVRCompositorError IVRCompositor009Hook_Submit(vr::IVRCompositor *self, vr::EVREye eEye, const vr::Texture_t *pTexture, const vr::VRTextureBounds_t *pBounds, vr::EVRSubmitFlags nSubmitFlags) {
 			OpenVrSubmitInfo info { eEye, pTexture, pBounds, nSubmitFlags };
 			g_openVr.OnSubmit(info);
-			auto error = hooks::CallOriginal(IVRCompositor009Hook_Submit)(info.eye, info.texture, info.bounds, info.submitFlags);
+			auto error = hooks::CallOriginal(IVRCompositor009Hook_Submit)(self, info.eye, info.texture, info.bounds, info.submitFlags);
 			return error;
 		}
 
-		vr::EVRCompositorError IVRCompositor008Hook_Submit(vr::EVREye eEye, unsigned int eTextureType, void *pTexture, const vr::VRTextureBounds_t *pBounds, vr::EVRSubmitFlags nSubmitFlags) {
+		vr::EVRCompositorError IVRCompositor008Hook_Submit(vr::IVRCompositor *self, vr::EVREye eEye, unsigned int eTextureType, void *pTexture, const vr::VRTextureBounds_t *pBounds, vr::EVRSubmitFlags nSubmitFlags) {
 			vr::Texture_t texInfo { pTexture, (vr::ETextureType)eTextureType, vr::ColorSpace_Auto };
 			OpenVrSubmitInfo info { eEye, &texInfo, pBounds, nSubmitFlags };
 			g_openVr.OnSubmit(info);
-			auto error = hooks::CallOriginal(IVRCompositor008Hook_Submit)(info.eye, info.texture->eType, info.texture->handle, info.bounds, info.submitFlags);
+			auto error = hooks::CallOriginal(IVRCompositor008Hook_Submit)(self, info.eye, info.texture->eType, info.texture->handle, info.bounds, info.submitFlags);
 			return error;
 		}
 
-		vr::EVRCompositorError IVRCompositor007Hook_Submit(vr::EVREye eEye, unsigned int eTextureType, void *pTexture, const vr::VRTextureBounds_t *pBounds) {
+		vr::EVRCompositorError IVRCompositor007Hook_Submit(vr::IVRCompositor *self, vr::EVREye eEye, unsigned int eTextureType, void *pTexture, const vr::VRTextureBounds_t *pBounds) {
 			vr::Texture_t texInfo { pTexture, (vr::ETextureType)eTextureType, vr::ColorSpace_Auto };
 			OpenVrSubmitInfo info { eEye, &texInfo, pBounds, vr::Submit_Default };
 			g_openVr.OnSubmit(info);
-			auto error = hooks::CallOriginal(IVRCompositor007Hook_Submit)(info.eye, info.texture->eType, info.texture->handle, info.bounds);
+			auto error = hooks::CallOriginal(IVRCompositor007Hook_Submit)(self, info.eye, info.texture->eType, info.texture->handle, info.bounds);
 			return error;
 		}
 
@@ -141,7 +141,6 @@ namespace vrperfkit {
 			return nullptr;
 		}
 
-		vr::EVRInitError error;
-		return (vr::IVRSystem*)IVRClientCoreHook_GetGenericInterface(g_clientCoreInstance, vr::IVRSystem_Version, &error);
+		return (vr::IVRSystem*)IVRClientCoreHook_GetGenericInterface(g_clientCoreInstance, vr::IVRSystem_Version, nullptr);
 	}
 }

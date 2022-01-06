@@ -10,7 +10,7 @@ namespace vrperfkit {
 
 	ComPtr<ID3D11ShaderResourceView> CreateShaderResourceView(ID3D11Device *device, ID3D11Texture2D *texture, int arrayIndex = 0); 
 	ComPtr<ID3D11UnorderedAccessView> CreateUnorderedAccessView(ID3D11Device *device, ID3D11Texture2D *texture, int arrayIndex = 0);
-	ComPtr<ID3D11Texture2D> CreateResolveTexture(ID3D11Device *device, ID3D11Texture2D *texture);
+	ComPtr<ID3D11Texture2D> CreateResolveTexture(ID3D11Device *device, ID3D11Texture2D *texture, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
 	ComPtr<ID3D11Texture2D> CreatePostProcessTexture(ID3D11Device *device, uint32_t width, uint32_t height, DXGI_FORMAT format);
 	ComPtr<ID3D11Buffer> CreateConstantsBuffer(ID3D11Device *device, uint32_t size);
 	ComPtr<ID3D11SamplerState> CreateLinearSampler(ID3D11Device *device);

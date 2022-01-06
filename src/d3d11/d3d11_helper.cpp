@@ -190,7 +190,7 @@ namespace vrperfkit {
 		return uav;
 	}
 
-	ComPtr<ID3D11Texture2D> CreateResolveTexture(ID3D11Device *device, ID3D11Texture2D *texture) {
+	ComPtr<ID3D11Texture2D> CreateResolveTexture(ID3D11Device *device, ID3D11Texture2D *texture, DXGI_FORMAT format) {
 		D3D11_TEXTURE2D_DESC td;
 		texture->GetDesc(&td);
 		td.SampleDesc.Count = 1;
@@ -200,6 +200,9 @@ namespace vrperfkit {
 		td.CPUAccessFlags = 0;
 		td.MiscFlags = 0;
 		td.MipLevels = 1;
+		if (format != DXGI_FORMAT_UNKNOWN) {
+			td.Format = format;
+		}
 
 		ComPtr<ID3D11Texture2D> tex;
 		CheckResult("creating resolve texture", device->CreateTexture2D(&td, nullptr, tex.GetAddressOf()));

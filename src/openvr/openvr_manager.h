@@ -26,12 +26,22 @@ namespace vrperfkit {
 		GraphicsApi graphicsApi = GraphicsApi::UNKNOWN;
 		uint32_t textureWidth = 0;
 		uint32_t textureHeight = 0;
+		ProjectionCenters projCenters;
+		float aspectRatio;
+		vr::VRTextureBounds_t outputBounds;
+		std::unique_ptr<vr::Texture_t> outputTexInfo;
 
 		std::unique_ptr<OpenVrD3D11Resources> d3d11Res;
 
 		void EnsureInit(const OpenVrSubmitInfo &info);
 		void InitD3D11(const OpenVrSubmitInfo &info);
-		
+
+		void CalculateProjectionCenters();
+		void CalculateEyeTextureAspectRatio();
+
+		void PostProcessD3D11(OpenVrSubmitInfo &info);
+
+		void PrepareOutputTexInfo(const vr::Texture_t *input, vr::EVRSubmitFlags submitFlags);
 	};
 
 	extern OpenVrManager g_openVr;
