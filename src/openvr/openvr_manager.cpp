@@ -8,6 +8,8 @@
 #include "d3d11/d3d11_helper.h"
 #include "d3d11/d3d11_post_processor.h"
 
+#include "dxgi/dxgi_interfaces.h"
+
 #include <unordered_map>
 
 namespace vrperfkit {
@@ -98,6 +100,13 @@ namespace vrperfkit {
 		}
 	};
 
+	struct OpenVrDxvkResources {
+		VRVulkanTextureData_t vkTexData;
+		ComPtr<IDXGIVkInteropSurface> dxvkSurface;
+		ComPtr<IDXGIVkInteropDevice> dxvkDevice;
+		VkImageLayout oldLayout;
+	};
+
 	void OpenVrManager::Shutdown() {
 		d3d11Res.reset();
 		initialized = false;
@@ -126,6 +135,10 @@ namespace vrperfkit {
 			if (graphicsApi == GraphicsApi::D3D11) {
 				PostProcessD3D11(info);
 			}
+
+			if (graphicsApi == GraphicsApi::DXVK) {
+				PatchDxvkSubmit(info);
+			}
 		}
 		catch (std::exception &e) {
 			LOG_ERROR << "Error during OpenVR submit: " << e.what();
@@ -136,11 +149,57 @@ namespace vrperfkit {
 		CheckHotkeys();
 	}
 
+	void OpenVrManager::PreCompositorWorkCall(bool transition) {
+		if (graphicsApi != GraphicsApi::DXVK || dxvkRes->dxvkDevice == nullptr) {
+			return;
+		}
+
+		if (transition) {
+			VkImageSubresourceRange subResRange;
+			subResRange.baseMipLevel = 0;
+			subResRange.baseArrayLayer = 0;
+			subResRange.layerCount = 1;
+			subResRange.levelCount = 1;
+			subResRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, dxvkRes->oldLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		}
+		dxvkRes->dxvkDevice->FlushRenderingCommands();
+		dxvkRes->dxvkDevice->LockSubmissionQueue();
+	}
+
+	void OpenVrManager::PostCompositorWorkCall(bool transition) {
+		if (graphicsApi != GraphicsApi::DXVK || dxvkRes->dxvkDevice == nullptr) {
+			return;
+		}
+
+		dxvkRes->dxvkDevice->ReleaseSubmissionQueue();
+
+		if (transition) {
+			VkImageSubresourceRange subResRange;
+			subResRange.baseMipLevel = 0;
+			subResRange.baseArrayLayer = 0;
+			subResRange.layerCount = 1;
+			subResRange.levelCount = 1;
+			subResRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dxvkRes->oldLayout);
+		}
+	}
+
 	void OpenVrManager::EnsureInit(const OpenVrSubmitInfo &info) {
 		if (info.texture->eType == TextureType_DirectX) {
 			ID3D11Texture2D *d3d11Tex = (ID3D11Texture2D*)info.texture->handle;
 			ComPtr<ID3D11Device> device;
 			d3d11Tex->GetDevice(device.GetAddressOf());
+
+			// check if this texture is actually a Vulkan dxvk texture...
+			ComPtr<IDXGIVkInteropSurface> dxvkSurface;
+			if (d3d11Tex->QueryInterface(IID_PPV_ARGS(dxvkSurface.GetAddressOf())) == S_OK) {
+				if (!initialized) {
+					Shutdown();
+					InitDxvk(info);
+				}
+				return;
+			}
 
 			// check if this texture is a D3D10 texture in disguise
 			ComPtr<ID3D10Device> d3d10Device;
@@ -201,6 +260,33 @@ namespace vrperfkit {
 		CalculateProjectionCenters();
 		CalculateEyeTextureAspectRatio();
 
+		initialized = true;
+	}
+
+	void OpenVrManager::InitDxvk(const OpenVrSubmitInfo &info) {
+		LOG_INFO << "DXVK is active as a D3D11 -> Vulkan wrapper!";
+		LOG_INFO << "Mod features are currently not supported on Vulkan output...";
+		LOG_INFO << "But we will make sure that the Vulkan output is actually displayed in the HMD :)";
+		dxvkRes.reset(new OpenVrDxvkResources);
+
+		ID3D11Texture2D *d3d11Tex = (ID3D11Texture2D*)info.texture->handle;
+		ComPtr<IDXGIVkInteropSurface> dxvkSurface;
+		d3d11Tex->QueryInterface(IID_PPV_ARGS(dxvkSurface.GetAddressOf()));
+		ComPtr<IDXGIVkInteropDevice> dxvkDevice;
+		dxvkSurface->GetDevice(dxvkDevice.GetAddressOf());
+		VkInstance instance;
+		VkPhysicalDevice physDev;
+		VkDevice vkDevice;
+		dxvkDevice->GetVulkanHandles(&instance, &physDev, &vkDevice);
+
+		auto *compositor = GetOpenVrCompositor();
+		char buf[4096];
+		compositor->GetVulkanDeviceExtensionsRequired(physDev, buf, sizeof(buf));
+		LOG_INFO << "Required Vk device extensions: " << buf;
+		compositor->GetVulkanInstanceExtensionsRequired(buf, sizeof(buf));
+		LOG_INFO << "Required Vk instance extensions: " << buf;
+
+		graphicsApi = GraphicsApi::DXVK;
 		initialized = true;
 	}
 
@@ -281,6 +367,47 @@ namespace vrperfkit {
 			outputTexInfo->eColorSpace = inputIsSrgb ? ColorSpace_Gamma : ColorSpace_Auto;
 			info.texture = outputTexInfo.get();
 		}
+	}
+
+	void OpenVrManager::PatchDxvkSubmit(OpenVrSubmitInfo &info) {
+		PrepareOutputTexInfo(info.texture, info.submitFlags);
+
+		ID3D11Texture2D *d3d11Tex = (ID3D11Texture2D*)info.texture->handle;
+
+		d3d11Tex->QueryInterface(IID_PPV_ARGS(dxvkRes->dxvkSurface.ReleaseAndGetAddressOf()));
+		dxvkRes->dxvkSurface->GetDevice(dxvkRes->dxvkDevice.ReleaseAndGetAddressOf());
+
+		VkImage image;
+		VkImageCreateInfo create;
+		memset(&create, 0, sizeof(create));
+		create.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		dxvkRes->dxvkSurface->GetVulkanImageInfo(&image, &dxvkRes->oldLayout, &create);
+		VkInstance instance;
+		VkPhysicalDevice physDev;
+		VkDevice vkDevice;
+		dxvkRes->dxvkDevice->GetVulkanHandles(&instance, &physDev, &vkDevice);
+		VkQueue queue;
+		uint32_t queueFamily;
+		dxvkRes->dxvkDevice->GetSubmissionQueue(&queue, &queueFamily);
+		dxvkRes->vkTexData.m_nWidth = create.extent.width;
+		dxvkRes->vkTexData.m_nHeight = create.extent.height;
+		dxvkRes->vkTexData.m_nFormat = create.format;
+		dxvkRes->vkTexData.m_nImage = (uint64_t)image;
+		dxvkRes->vkTexData.m_nSampleCount = create.samples;
+		dxvkRes->vkTexData.m_pDevice = vkDevice;
+		dxvkRes->vkTexData.m_pInstance = instance;
+		dxvkRes->vkTexData.m_pPhysicalDevice = physDev;
+		dxvkRes->vkTexData.m_pQueue = queue;
+		dxvkRes->vkTexData.m_nQueueFamilyIndex = queueFamily;
+		LOG_INFO << "Dxvk texture info: " << create.extent.width << "x" << create.extent.height << " (" << (uint32_t)create.usage << "), " << (uint32_t)create.format;
+
+		if (!(create.usage & (VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT))) {
+			LOG_ERROR << "Vulkan texture is missing required usage flags!";
+		}
+
+		outputTexInfo->handle = &dxvkRes->vkTexData;
+		outputTexInfo->eType = TextureType_Vulkan;
+		info.texture = outputTexInfo.get();
 	}
 
 	void OpenVrManager::PrepareOutputTexInfo(const Texture_t *input, EVRSubmitFlags submitFlags) {

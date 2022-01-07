@@ -63,6 +63,8 @@ namespace vrperfkit {
 			upscaling.applyMipBias = upscaleCfg["applyMipBias"].as<bool>(upscaling.applyMipBias);
 
 			g_config.debugMode = cfg["debugMode"].as<bool>(g_config.debugMode);
+
+			g_config.dllLoadPath = cfg["dllLoadPath"].as<std::string>(g_config.dllLoadPath);
 		}
 		catch (const YAML::Exception &e) {
 			LOG_ERROR << "Failed to load configuration file: " << e.msg;

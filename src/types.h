@@ -6,6 +6,7 @@ namespace vrperfkit {
 		UNKNOWN,
 		D3D11,
 		D3D12,
+		DXVK,
 	};
 
 	enum Eye {

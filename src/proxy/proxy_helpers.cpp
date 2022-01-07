@@ -54,7 +54,7 @@ namespace vrperfkit {
 			return;
 		}
 
-		fs::path realDllPath = GetSystemPath() / name;
+		fs::path realDllPath = (!g_config.dllLoadPath.empty()) ? g_config.dllLoadPath : GetSystemPath() / name;
 		LOG_INFO << "Loading real DLL at " << realDllPath;
 		pModule = LoadLibraryW(realDllPath.c_str());
 		if (pModule == nullptr) {

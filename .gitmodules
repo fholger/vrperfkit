@@ -4,3 +4,9 @@
 [submodule "ThirdParty/yaml-cpp"]
 	path = ThirdParty/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "ThirdParty/dxvk"]
+	path = ThirdParty/dxvk
+	url = https://github.com/doitsujin/dxvk.git
+[submodule "ThirdParty/Vulkan-Headers"]
+	path = ThirdParty/Vulkan-Headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers.git

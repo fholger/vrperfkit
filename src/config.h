@@ -16,6 +16,7 @@ namespace vrperfkit {
 	struct Config {
 		UpscaleConfig upscaling;
 		bool debugMode = false;
+		std::string dllLoadPath = "";
 	};
 
 	extern Config g_config;

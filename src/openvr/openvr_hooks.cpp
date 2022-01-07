@@ -27,7 +27,12 @@ namespace vrperfkit {
 		vr::EVRCompositorError IVRCompositor009Hook_Submit(vr::IVRCompositor *self, vr::EVREye eEye, const vr::Texture_t *pTexture, const vr::VRTextureBounds_t *pBounds, vr::EVRSubmitFlags nSubmitFlags) {
 			OpenVrSubmitInfo info { eEye, pTexture, pBounds, nSubmitFlags };
 			g_openVr.OnSubmit(info);
+			g_openVr.PreCompositorWorkCall(true);
 			auto error = hooks::CallOriginal(IVRCompositor009Hook_Submit)(self, info.eye, info.texture, info.bounds, info.submitFlags);
+			if (error != vr::VRCompositorError_None) {
+				LOG_ERROR << "OpenVR submit failed: " << error;
+			}
+			g_openVr.PostCompositorWorkCall(true);
 			return error;
 		}
 
@@ -45,6 +50,23 @@ namespace vrperfkit {
 			g_openVr.OnSubmit(info);
 			auto error = hooks::CallOriginal(IVRCompositor007Hook_Submit)(self, info.eye, info.texture->eType, info.texture->handle, info.bounds);
 			return error;
+		}
+
+		vr::EVRCompositorError IVRCompositorHook_WaitGetPoses(vr::IVRCompositor *self, vr::TrackedDevicePose_t *pRenderPoseArray, uint32_t unRenderPoseArrayCount,
+				vr::TrackedDevicePose_t *pGamePoseArray, uint32_t unGamePoseArrayCount) {
+			g_openVr.PreCompositorWorkCall();
+			auto error = hooks::CallOriginal(IVRCompositorHook_WaitGetPoses)(self, pRenderPoseArray, unRenderPoseArrayCount, pGamePoseArray, unGamePoseArrayCount);
+			g_openVr.PostCompositorWorkCall();
+			if (error != vr::VRCompositorError_None) {
+				LOG_ERROR << "OpenVR WaitGetPoses failed: " << error;
+			}
+			return error;
+		}
+
+		void IVRCompositorHook_PostPresentHandoff(vr::IVRCompositor *self) {
+			g_openVr.PreCompositorWorkCall();
+			hooks::CallOriginal(IVRCompositorHook_PostPresentHandoff)(self);
+			g_openVr.PostCompositorWorkCall();
 		}
 
 		void *Hook_VRClientCoreFactory(const char *pInterfaceName, int *pReturnCode) {
@@ -115,6 +137,12 @@ namespace vrperfkit {
 		}
 
 		if (g_compositorVersion == 0 && std::sscanf(interfaceName, "IVRCompositor_%u", &g_compositorVersion)) {
+			// FIXME: investigate older versions
+			if (g_compositorVersion >= 15) {
+				hooks::InstallVirtualFunctionHook("IVRCompositor::WaitGetPoses", instance, 2, (void*)&IVRCompositorHook_WaitGetPoses);
+				hooks::InstallVirtualFunctionHook("IVRCompositor::PostPresentHandoff", instance, 7, (void*)&IVRCompositorHook_PostPresentHandoff);
+			}
+
 			if (g_compositorVersion >= 9) {
 				uint32_t methodPos = g_compositorVersion >= 12 ? 5 : 4;
 				hooks::InstallVirtualFunctionHook("IVRCompositor::Submit", instance, methodPos, (void*)&IVRCompositor009Hook_Submit);
@@ -134,6 +162,14 @@ namespace vrperfkit {
 			uint32_t methodPos = (g_systemVersion >= 9 ? 0 : 1);
 			hooks::InstallVirtualFunctionHook("IVRSystem::GetRecommendedRenderTargetSize", instance, methodPos, (void*)&IVRSystemHook_GetRecommendedRenderTargetSize);
 		}
+	}
+
+	vr::IVRCompositor * GetOpenVrCompositor() {
+		if (g_clientCoreInstance == nullptr) {
+			return nullptr;
+		}
+
+		return (vr::IVRCompositor*)IVRClientCoreHook_GetGenericInterface(g_clientCoreInstance, vr::IVRCompositor_Version, nullptr);
 	}
 
 	vr::IVRSystem * GetOpenVrSystem() {
