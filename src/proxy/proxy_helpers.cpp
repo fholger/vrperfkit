@@ -6,15 +6,12 @@
 
 namespace fs = std::filesystem;
 
-namespace {
+namespace vrperfkit {
 	fs::path GetSystemPath() {
 		WCHAR buf[4096] = L"";
 		GetSystemDirectoryW(buf, ARRAYSIZE(buf));
 		return buf;
 	}
-}
-
-namespace vrperfkit {
 
 	// RenderDoc hooks the GetProcAddress function to inject its own hooks. If we call GetProcAddress,
 	// it will create an endless redirect loop between our exports and RenderDoc's hooks.
@@ -49,16 +46,15 @@ namespace vrperfkit {
 		return nullptr;
 	}
 
-	void EnsureLoadDll(HMODULE &pModule, const std::string &name) {
+	void EnsureLoadDll(HMODULE &pModule, const fs::path &path) {
 		if (pModule != nullptr) {
 			return;
 		}
 
-		fs::path realDllPath = (!g_config.dllLoadPath.empty()) ? g_config.dllLoadPath : GetSystemPath() / name;
-		LOG_INFO << "Loading real DLL at " << realDllPath;
-		pModule = LoadLibraryW(realDllPath.c_str());
+		LOG_INFO << "Loading DLL at " << path;
+		pModule = LoadLibraryW(path.c_str());
 		if (pModule == nullptr) {
-			LOG_ERROR << "Failed to load original DLL";
+			LOG_ERROR << "Failed to load DLL " << path;
 		}
 	}
 }

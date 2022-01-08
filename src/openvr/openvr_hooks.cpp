@@ -7,7 +7,7 @@
 #include "resolution_scaling.h"
 
 namespace vrperfkit {
-	extern HMODULE g_module;
+	extern HMODULE g_moduleSelf;
 
 	namespace {
 		void *g_clientCoreInstance = nullptr;
@@ -107,7 +107,7 @@ namespace vrperfkit {
 		std::wstring dllName = L"vrclient.dll";
 #endif
 		HMODULE handle;
-		if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, dllName.c_str(), &handle) || handle == g_module) {
+		if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, dllName.c_str(), &handle) || handle == g_moduleSelf) {
 			return;
 		}
 

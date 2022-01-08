@@ -13,8 +13,18 @@ namespace vrperfkit {
 		bool applyMipBias = true;
 	};
 
+	struct DxvkConfig {
+		bool enabled = false;
+		std::string dxgiDllPath = "dxvk\\dxgi.dll";
+		std::string d3d11DllPath = "dxvk\\d3d11.dll";
+
+		// not actually a config option, but a real-time toggle hack...
+		bool shouldUseDxvk = true;
+	};
+
 	struct Config {
 		UpscaleConfig upscaling;
+		DxvkConfig dxvk;
 		bool debugMode = false;
 		std::string dllLoadPath = "";
 	};

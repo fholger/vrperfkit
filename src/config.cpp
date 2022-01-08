@@ -62,6 +62,12 @@ namespace vrperfkit {
 			upscaling.radius = std::max(0.f, upscaleCfg["radius"].as<float>(upscaling.radius));
 			upscaling.applyMipBias = upscaleCfg["applyMipBias"].as<bool>(upscaling.applyMipBias);
 
+			YAML::Node dxvkCfg = cfg["dxvk"];
+			DxvkConfig &dxvk = g_config.dxvk;
+			dxvk.enabled = dxvkCfg["enabled"].as<bool>(dxvk.enabled);
+			dxvk.dxgiDllPath = dxvkCfg["dxgiDllPath"].as<std::string>(dxvk.dxgiDllPath);
+			dxvk.d3d11DllPath = dxvkCfg["d3d11DllPath"].as<std::string>(dxvk.d3d11DllPath);
+
 			g_config.debugMode = cfg["debugMode"].as<bool>(g_config.debugMode);
 
 			g_config.dllLoadPath = cfg["dllLoadPath"].as<std::string>(g_config.dllLoadPath);

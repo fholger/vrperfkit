@@ -10,7 +10,7 @@
 namespace fs = std::filesystem;
 
 namespace vrperfkit {
-	HMODULE g_module;
+	HMODULE g_moduleSelf;
 
 	fs::path GetModulePath(HMODULE module) {
 		WCHAR buf[4096];
@@ -18,6 +18,7 @@ namespace vrperfkit {
 	}
 
 	void InstallD3D11Hooks();
+	void InstallDXGIHooks();
 }
 
 namespace {
@@ -29,12 +30,13 @@ namespace {
 		vrperfkit::InstallOpenVrHooks();
 		vrperfkit::InstallOculusHooks();
 		vrperfkit::InstallD3D11Hooks();
+		vrperfkit::InstallDXGIHooks();
 	}
 
 	HMODULE WINAPI Hook_LoadLibraryA(LPCSTR lpFileName) {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryA)(lpFileName);
 
-		if (handle != nullptr && handle != vrperfkit::g_module) {
+		if (handle != nullptr && handle != vrperfkit::g_moduleSelf) {
 			LOG_DEBUG << "LoadLibraryA " << lpFileName;
 			InstallVrHooks();
 		}
@@ -45,7 +47,7 @@ namespace {
 	HMODULE WINAPI Hook_LoadLibraryExA(LPCSTR lpFileName, HANDLE hFile, DWORD dwFlags) {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryExA)(lpFileName, hFile, dwFlags);
 
-		if (handle != nullptr && handle != vrperfkit::g_module && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
+		if (handle != nullptr && handle != vrperfkit::g_moduleSelf && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
 			LOG_DEBUG << "LoadLibraryExA " << lpFileName;
 			InstallVrHooks();
 		}
@@ -56,7 +58,7 @@ namespace {
 	HMODULE WINAPI Hook_LoadLibraryW(LPCWSTR lpFileName) {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryW)(lpFileName);
 
-		if (handle != nullptr && handle != vrperfkit::g_module) {
+		if (handle != nullptr && handle != vrperfkit::g_moduleSelf) {
 			LOG_DEBUG << "LoadLibraryW " << lpFileName;
 			InstallVrHooks();
 		}
@@ -67,7 +69,7 @@ namespace {
 	HMODULE WINAPI Hook_LoadLibraryExW(LPCWSTR lpFileName, HANDLE hFile, DWORD dwFlags) {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryExW)(lpFileName, hFile, dwFlags);
 
-		if (handle != nullptr && handle != vrperfkit::g_module && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
+		if (handle != nullptr && handle != vrperfkit::g_moduleSelf && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
 			LOG_DEBUG << "LoadLibraryExW " << lpFileName;
 			InstallVrHooks();
 		}
@@ -76,7 +78,7 @@ namespace {
 	}
 
 	void InitVrPerfkit(HMODULE module) {
-		vrperfkit::g_module = module;
+		vrperfkit::g_moduleSelf = module;
 		g_dllPath = vrperfkit::GetModulePath(module);
 		g_basePath = g_dllPath.parent_path();
 		g_executablePath = vrperfkit::GetModulePath(nullptr);
