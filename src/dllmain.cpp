@@ -16,6 +16,8 @@ namespace vrperfkit {
 		WCHAR buf[4096];
 		return GetModuleFileNameW(module, buf, ARRAYSIZE(buf)) ? buf : fs::path();
 	}
+
+	void InstallD3D11Hooks();
 }
 
 namespace {
@@ -26,6 +28,7 @@ namespace {
 	void InstallVrHooks() {
 		vrperfkit::InstallOpenVrHooks();
 		vrperfkit::InstallOculusHooks();
+		vrperfkit::InstallD3D11Hooks();
 	}
 
 	HMODULE WINAPI Hook_LoadLibraryA(LPCSTR lpFileName) {
