@@ -161,8 +161,9 @@ namespace vrperfkit {
 			subResRange.layerCount = 1;
 			subResRange.levelCount = 1;
 			subResRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, dxvkRes->oldLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+			//dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, dxvkRes->oldLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		}
+		LOG_DEBUG << "Flushing and locking dxvk queue";
 		dxvkRes->dxvkDevice->FlushRenderingCommands();
 		dxvkRes->dxvkDevice->LockSubmissionQueue();
 	}
@@ -172,6 +173,7 @@ namespace vrperfkit {
 			return;
 		}
 
+		LOG_DEBUG << "Releasing dxvk queue";
 		dxvkRes->dxvkDevice->ReleaseSubmissionQueue();
 
 		if (transition) {
@@ -181,7 +183,7 @@ namespace vrperfkit {
 			subResRange.layerCount = 1;
 			subResRange.levelCount = 1;
 			subResRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dxvkRes->oldLayout);
+			//dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dxvkRes->oldLayout);
 		}
 	}
 
@@ -407,6 +409,7 @@ namespace vrperfkit {
 
 		outputTexInfo->handle = &dxvkRes->vkTexData;
 		outputTexInfo->eType = TextureType_Vulkan;
+		info.submitFlags = Submit_Default;
 		info.texture = outputTexInfo.get();
 	}
 

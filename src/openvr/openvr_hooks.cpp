@@ -14,12 +14,22 @@ namespace vrperfkit {
 		int g_compositorVersion = 0;
 		int g_systemVersion = 0;
 
+		int dxCount = 0;
+
 		void UseSystemDirectX() {
-			g_config.dxvk.shouldUseDxvk = false;
+			++dxCount;
+			if (dxCount == 1) {
+				g_config.dxvk.shouldUseDxvk = false;
+				LOG_DEBUG << "Now using system DirectX";
+			}
 		}
 
 		void UseDxvkDirectX() {
-			g_config.dxvk.shouldUseDxvk = true;
+			--dxCount;
+			if (dxCount == 0) {
+				g_config.dxvk.shouldUseDxvk = true;
+				LOG_DEBUG << "Now using dxvk";
+			}
 		}
 
 		void IVRSystemHook_GetRecommendedRenderTargetSize(vr::IVRSystem *self, uint32_t *pnWidth, uint32_t *pnHeight) {
@@ -39,6 +49,7 @@ namespace vrperfkit {
 			g_openVr.OnSubmit(info);
 			g_openVr.PreCompositorWorkCall(true);
 			UseSystemDirectX();
+			LOG_DEBUG << "Submitting texture of type " << info.texture->eType;
 			auto error = hooks::CallOriginal(IVRCompositor009Hook_Submit)(self, info.eye, info.texture, info.bounds, info.submitFlags);
 			UseDxvkDirectX();
 			if (error != vr::VRCompositorError_None) {

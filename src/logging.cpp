@@ -13,7 +13,7 @@ namespace vrperfkit {
 	std::ofstream g_logFile;
 
 	void OpenLogFile(fs::path path) {
-		g_logFile.open(path, std::ios_base::app);
+		g_logFile.open(path, std::ios_base::trunc | std::ios_base::out);
 		g_logFile.setf(std::ios::showbase);
 	}
 
@@ -29,7 +29,7 @@ namespace vrperfkit {
 		std::strftime(timeBuf, sizeof(timeBuf), "%H:%M:%S", &localTime);
 
 		g_logMutex.lock();
-		g_logFile << timeBuf << " " << prefix;
+		g_logFile << timeBuf << " [" << std::this_thread::get_id() << "] " << prefix;
 	}
 
 	LogMessage::~LogMessage() {
