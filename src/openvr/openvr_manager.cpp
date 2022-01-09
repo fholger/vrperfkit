@@ -101,7 +101,7 @@ namespace vrperfkit {
 	};
 
 	struct OpenVrDxvkResources {
-		VRVulkanTextureData_t vkTexData;
+		VRVulkanTextureArrayData_t vkTexData;
 		ComPtr<IDXGIVkInteropSurface> dxvkSurface;
 		ComPtr<IDXGIVkInteropDevice> dxvkDevice;
 		VkImageLayout oldLayout;
@@ -418,6 +418,8 @@ namespace vrperfkit {
 		dxvkRes->vkTexData.m_pPhysicalDevice = physDev;
 		dxvkRes->vkTexData.m_pQueue = queue;
 		dxvkRes->vkTexData.m_nQueueFamilyIndex = queueFamily;
+		dxvkRes->vkTexData.m_unArrayIndex = info.eye;
+		dxvkRes->vkTexData.m_unArraySize = create.arrayLayers;
 		LOG_INFO << "Dxvk texture info: " << create.extent.width << "x" << create.extent.height << " (" << (uint32_t)create.usage << "), " << (uint32_t)create.format;
 
 		if (!(create.usage & (VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT))) {
@@ -427,6 +429,9 @@ namespace vrperfkit {
 		outputTexInfo->handle = &dxvkRes->vkTexData;
 		outputTexInfo->eType = TextureType_Vulkan;
 		info.submitFlags = Submit_Default;
+		if (create.arrayLayers > 1) {
+			info.submitFlags = Submit_VulkanTextureWithArrayData;
+		}
 		info.texture = outputTexInfo.get();
 	}
 
