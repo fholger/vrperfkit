@@ -14,28 +14,8 @@ namespace vrperfkit {
 		int g_compositorVersion = 0;
 		int g_systemVersion = 0;
 
-		int dxCount = 0;
-
-		void UseSystemDirectX() {
-			++dxCount;
-			if (dxCount == 1) {
-				g_config.dxvk.shouldUseDxvk = false;
-				LOG_DEBUG << "Now using system DirectX";
-			}
-		}
-
-		void UseDxvkDirectX() {
-			--dxCount;
-			if (dxCount == 0) {
-				g_config.dxvk.shouldUseDxvk = true;
-				LOG_DEBUG << "Now using dxvk";
-			}
-		}
-
 		void IVRSystemHook_GetRecommendedRenderTargetSize(vr::IVRSystem *self, uint32_t *pnWidth, uint32_t *pnHeight) {
-			UseSystemDirectX();
 			hooks::CallOriginal(IVRSystemHook_GetRecommendedRenderTargetSize)(self, pnWidth, pnHeight);
-			UseDxvkDirectX();
 
 			if (pnWidth == nullptr || pnHeight == nullptr) {
 				return;
@@ -45,13 +25,12 @@ namespace vrperfkit {
 		}
 
 		vr::EVRCompositorError IVRCompositor009Hook_Submit(vr::IVRCompositor *self, vr::EVREye eEye, const vr::Texture_t *pTexture, const vr::VRTextureBounds_t *pBounds, vr::EVRSubmitFlags nSubmitFlags) {
+			LOG_DEBUG << "Submit";
 			OpenVrSubmitInfo info { eEye, pTexture, pBounds, nSubmitFlags };
 			g_openVr.OnSubmit(info);
 			g_openVr.PreCompositorWorkCall(true);
-			UseSystemDirectX();
 			LOG_DEBUG << "Submitting texture of type " << info.texture->eType;
 			auto error = hooks::CallOriginal(IVRCompositor009Hook_Submit)(self, info.eye, info.texture, info.bounds, info.submitFlags);
-			UseDxvkDirectX();
 			if (error != vr::VRCompositorError_None) {
 				LOG_ERROR << "OpenVR submit failed: " << error;
 			}
@@ -63,9 +42,9 @@ namespace vrperfkit {
 			vr::Texture_t texInfo { pTexture, (vr::ETextureType)eTextureType, vr::ColorSpace_Auto };
 			OpenVrSubmitInfo info { eEye, &texInfo, pBounds, nSubmitFlags };
 			g_openVr.OnSubmit(info);
-			UseSystemDirectX();
+			g_openVr.PreCompositorWorkCall(true);
 			auto error = hooks::CallOriginal(IVRCompositor008Hook_Submit)(self, info.eye, info.texture->eType, info.texture->handle, info.bounds, info.submitFlags);
-			UseDxvkDirectX();
+			g_openVr.PostCompositorWorkCall(true);
 			return error;
 		}
 
@@ -73,18 +52,17 @@ namespace vrperfkit {
 			vr::Texture_t texInfo { pTexture, (vr::ETextureType)eTextureType, vr::ColorSpace_Auto };
 			OpenVrSubmitInfo info { eEye, &texInfo, pBounds, vr::Submit_Default };
 			g_openVr.OnSubmit(info);
-			UseSystemDirectX();
+			g_openVr.PreCompositorWorkCall(true);
 			auto error = hooks::CallOriginal(IVRCompositor007Hook_Submit)(self, info.eye, info.texture->eType, info.texture->handle, info.bounds);
-			UseDxvkDirectX();
+			g_openVr.PostCompositorWorkCall(true);
 			return error;
 		}
 
 		vr::EVRCompositorError IVRCompositorHook_WaitGetPoses(vr::IVRCompositor *self, vr::TrackedDevicePose_t *pRenderPoseArray, uint32_t unRenderPoseArrayCount,
 				vr::TrackedDevicePose_t *pGamePoseArray, uint32_t unGamePoseArrayCount) {
+			LOG_DEBUG << "WaitGetPoses";
 			g_openVr.PreCompositorWorkCall();
-			UseSystemDirectX();
 			auto error = hooks::CallOriginal(IVRCompositorHook_WaitGetPoses)(self, pRenderPoseArray, unRenderPoseArrayCount, pGamePoseArray, unGamePoseArrayCount);
-			UseDxvkDirectX();
 			g_openVr.PostCompositorWorkCall();
 			if (error != vr::VRCompositorError_None) {
 				LOG_ERROR << "OpenVR WaitGetPoses failed: " << error;
@@ -93,31 +71,25 @@ namespace vrperfkit {
 		}
 
 		void IVRCompositorHook_PostPresentHandoff(vr::IVRCompositor *self) {
+			LOG_DEBUG << "PostPresentHandoff";
 			g_openVr.PreCompositorWorkCall();
-			UseSystemDirectX();
 			hooks::CallOriginal(IVRCompositorHook_PostPresentHandoff)(self);
-			UseDxvkDirectX();
 			g_openVr.PostCompositorWorkCall();
 		}
 
 		void *Hook_VRClientCoreFactory(const char *pInterfaceName, int *pReturnCode) {
-			UseSystemDirectX();
 			void *instance = hooks::CallOriginal(Hook_VRClientCoreFactory)(pInterfaceName, pReturnCode);
 			HookOpenVrInterface(pInterfaceName, instance);
-			UseDxvkDirectX();
 			return instance;
 		}
 
 		void *IVRClientCoreHook_GetGenericInterface(void *self, const char *interfaceName, vr::EVRInitError *error) {
-			UseSystemDirectX();
 			void *instance = hooks::CallOriginal(IVRClientCoreHook_GetGenericInterface)(self, interfaceName, error);
 			HookOpenVrInterface(interfaceName, instance);
-			UseDxvkDirectX();
 			return instance;
 		}
 
 		void IVRClientCoreHook_Cleanup(void *self) {
-			UseSystemDirectX();
 			hooks::CallOriginal(IVRClientCoreHook_Cleanup)(self);
 			LOG_INFO << "IVRClientCore::Cleanup was called, deleting hooks...";
 			hooks::RemoveHook((void*)&IVRClientCoreHook_GetGenericInterface);
@@ -128,7 +100,6 @@ namespace vrperfkit {
 			hooks::RemoveHook((void*)IVRSystemHook_GetRecommendedRenderTargetSize);
 			g_compositorVersion = 0;
 			g_systemVersion = 0;
-			UseDxvkDirectX();
 		}
 	}
 

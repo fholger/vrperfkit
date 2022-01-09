@@ -105,6 +105,7 @@ namespace vrperfkit {
 		ComPtr<IDXGIVkInteropSurface> dxvkSurface;
 		ComPtr<IDXGIVkInteropDevice> dxvkDevice;
 		VkImageLayout oldLayout;
+		int vkQueueLockCount = 0;
 	};
 
 	void OpenVrManager::Shutdown() {
@@ -150,7 +151,14 @@ namespace vrperfkit {
 	}
 
 	void OpenVrManager::PreCompositorWorkCall(bool transition) {
+		LOG_DEBUG << "PreCompositorWorkCall";
 		if (graphicsApi != GraphicsApi::DXVK || dxvkRes->dxvkDevice == nullptr) {
+			return;
+		}
+
+		++dxvkRes->vkQueueLockCount;
+
+		if (dxvkRes->vkQueueLockCount > 1) {
 			return;
 		}
 
@@ -161,20 +169,29 @@ namespace vrperfkit {
 			subResRange.layerCount = 1;
 			subResRange.levelCount = 1;
 			subResRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			//dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, dxvkRes->oldLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+			dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, dxvkRes->oldLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		}
 		LOG_DEBUG << "Flushing and locking dxvk queue";
 		dxvkRes->dxvkDevice->FlushRenderingCommands();
 		dxvkRes->dxvkDevice->LockSubmissionQueue();
+		g_config.dxvk.shouldUseDxvk = false;
 	}
 
 	void OpenVrManager::PostCompositorWorkCall(bool transition) {
+		LOG_DEBUG << "PostCompositorWorkCall";
 		if (graphicsApi != GraphicsApi::DXVK || dxvkRes->dxvkDevice == nullptr) {
 			return;
 		}
 
+		--dxvkRes->vkQueueLockCount;
+		if (dxvkRes->vkQueueLockCount > 0) {
+			return;
+		}
+
+		g_config.dxvk.shouldUseDxvk = true;
 		LOG_DEBUG << "Releasing dxvk queue";
 		dxvkRes->dxvkDevice->ReleaseSubmissionQueue();
+		dxvkRes->vkQueueLockCount = 0;
 
 		if (transition) {
 			VkImageSubresourceRange subResRange;
@@ -183,7 +200,7 @@ namespace vrperfkit {
 			subResRange.layerCount = 1;
 			subResRange.levelCount = 1;
 			subResRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			//dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dxvkRes->oldLayout);
+			dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dxvkRes->oldLayout);
 		}
 	}
 
