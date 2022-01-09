@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "d3d11_fsr_upscaler.h"
+#include "d3d11_nis_upscaler.h"
 #include "logging.h"
 #include "hooks.h"
 
@@ -116,8 +117,7 @@ namespace vrperfkit {
 				upscaler.reset(new D3D11FsrUpscaler(device.Get(), td.Width, td.Height, td.Format));
 				break;
 			case UpscaleMethod::NIS:
-				// FIXME implement NIS upscaler
-				upscaler.reset(new D3D11FsrUpscaler(device.Get(), td.Width, td.Height, td.Format));
+				upscaler.reset(new D3D11NisUpscaler(device.Get()));
 				break;
 			}
 

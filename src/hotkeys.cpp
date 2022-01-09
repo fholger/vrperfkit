@@ -9,7 +9,18 @@
 namespace {
 	using vrperfkit::g_config;
 
-	void CycleUpscalingMethod() {}
+	void CycleUpscalingMethod() {
+		switch (g_config.upscaling.method) {
+		case vrperfkit::UpscaleMethod::FSR:
+			g_config.upscaling.method = vrperfkit::UpscaleMethod::NIS;
+			break;
+		case vrperfkit::UpscaleMethod::NIS:
+			g_config.upscaling.method = vrperfkit::UpscaleMethod::FSR;
+			break;
+		}
+
+		LOG_INFO << "Now using upscaling method " << g_config.upscaling.method;
+	}
 
 	void IncreaseUpscalingRadius() {
 		g_config.upscaling.radius += 0.05f;
@@ -72,8 +83,14 @@ namespace {
 		{ "enter", VK_RETURN },
 		{ "return", VK_RETURN },
 		{ "shift", VK_SHIFT },
+		{ "lshift", VK_LSHIFT },
+		{ "rshift", VK_RSHIFT },
 		{ "ctrl", VK_CONTROL },
+		{ "lctrl", VK_LCONTROL },
+		{ "rctrl", VK_RCONTROL },
 		{ "alt", VK_MENU },
+		{ "lalt", VK_LMENU },
+		{ "ralt", VK_RMENU },
 		{ "pause", VK_PAUSE },
 		{ "esc", VK_ESCAPE },
 		{ "space", VK_SPACE },

@@ -35,6 +35,17 @@ namespace vrperfkit {
 			return *this << std::wstring(msg);
 		}
 
+		LogMessage& operator<<(const UpscaleMethod &method) {
+			switch (method) {
+			case UpscaleMethod::FSR:
+				return *this << "FSR";
+			case UpscaleMethod::NIS:
+				return *this << "NIS";
+			}
+
+			return *this << "unknown";
+		}
+
 	private:
 		bool flush;
 	};

@@ -57,6 +57,8 @@ set(D3D11_FILES
 	src/d3d11/d3d11_helper.cpp
 	src/d3d11/d3d11_fsr_upscaler.h
 	src/d3d11/d3d11_fsr_upscaler.cpp
+	src/d3d11/d3d11_nis_upscaler.h
+	src/d3d11/d3d11_nis_upscaler.cpp
 	src/d3d11/d3d11_post_processor.h
 	src/d3d11/d3d11_post_processor.cpp
 )
@@ -71,6 +73,17 @@ set(FSR_FILES
 source_group("fsr" FILES ${FSR_FILES})
 set_compute_shader(src/fsr/fsr_easu.hlsl "shader_fsr_easu.h" "g_FSRUpscaleShader")
 set_compute_shader(src/fsr/fsr_rcas.hlsl "shader_fsr_rcas.h" "g_FSRSharpenShader")
+
+set(NIS_FILES
+	src/nis/NIS_Common.h
+	src/nis/NIS_Sharpen.hlsl
+	src/nis/NIS_Upscale.hlsl
+	src/nis/NIS_Config.h
+	src/nis/NIS_Scaler.h
+)
+source_group("nis" FILES ${NIS_FILES})
+set_compute_shader(src/nis/NIS_Sharpen.hlsl "shader_nis_sharpen.h" "g_NISSharpenShader")
+set_compute_shader(src/nis/NIS_Upscale.hlsl "shader_nis_upscale.h" "g_NISUpscaleShader")
 
 set(MAIN_FILES
 	src/config.h
@@ -95,6 +108,7 @@ set(PROJECT_FILES
 	${OPENVR_FILES}
 	${D3D11_FILES}
 	${FSR_FILES}
+	${NIS_FILES}
 	${MAIN_FILES}
 )
 
