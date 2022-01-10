@@ -11,6 +11,9 @@ namespace fs = std::filesystem;
 
 namespace vrperfkit {
 	HMODULE g_moduleSelf;
+	fs::path g_dllPath;
+	fs::path g_basePath;
+	fs::path g_executablePath;
 
 	fs::path GetModulePath(HMODULE module) {
 		WCHAR buf[4096];
@@ -22,9 +25,6 @@ namespace vrperfkit {
 }
 
 namespace {
-	fs::path g_dllPath;
-	fs::path g_basePath;
-	fs::path g_executablePath;
 
 	void InstallVrHooks() {
 		vrperfkit::InstallOpenVrHooks();
@@ -79,17 +79,17 @@ namespace {
 
 	void InitVrPerfkit(HMODULE module) {
 		vrperfkit::g_moduleSelf = module;
-		g_dllPath = vrperfkit::GetModulePath(module);
-		g_basePath = g_dllPath.parent_path();
-		g_executablePath = vrperfkit::GetModulePath(nullptr);
+		vrperfkit::g_dllPath = vrperfkit::GetModulePath(module);
+		vrperfkit::g_basePath = vrperfkit::g_dllPath.parent_path();
+		vrperfkit::g_executablePath = vrperfkit::GetModulePath(nullptr);
 
-		vrperfkit::OpenLogFile(g_basePath / "vrperfkit.log");
+		vrperfkit::OpenLogFile(vrperfkit::g_basePath / "vrperfkit.log");
 		LOG_INFO << "======================";
 		LOG_INFO << "VR Performance Toolkit";
 		LOG_INFO << "======================\n";
 
-		vrperfkit::LoadConfig(g_basePath / "vrperfkit.yml");
-		vrperfkit::LoadHotkeys(g_basePath / "vrperfkit.yml");
+		vrperfkit::LoadConfig(vrperfkit::g_basePath / "vrperfkit.yml");
+		vrperfkit::LoadHotkeys(vrperfkit::g_basePath / "vrperfkit.yml");
 		vrperfkit::PrintCurrentConfig();
 		vrperfkit::PrintHotkeys();
 

@@ -27,6 +27,9 @@ namespace vrperfkit {
 		DxvkConfig dxvk;
 		bool debugMode = false;
 		std::string dllLoadPath = "";
+
+		// not a config option, but a signal to take a capture of the final rendering output
+		bool captureOutput = false;
 	};
 
 	extern Config g_config;

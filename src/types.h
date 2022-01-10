@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <string>
 
 namespace vrperfkit {
 	enum class GraphicsApi {
@@ -50,4 +51,6 @@ namespace vrperfkit {
 		NIS,
 		CAS,
 	};
+	UpscaleMethod MethodFromString(std::string s);
+	std::string MethodToString(UpscaleMethod method);
 }

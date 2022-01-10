@@ -63,6 +63,8 @@ set(D3D11_FILES
 	src/d3d11/d3d11_nis_upscaler.cpp
 	src/d3d11/d3d11_post_processor.h
 	src/d3d11/d3d11_post_processor.cpp
+	src/d3d11/ScreenGrab11.h
+	src/d3d11/ScreenGrab11.cpp
 )
 source_group("d3d11" FILES ${D3D11_FILES})
 
@@ -145,4 +147,4 @@ endif()
 
 add_library(vrperfkit SHARED ${PROJECT_FILES})
 set_target_properties(vrperfkit PROPERTIES OUTPUT_NAME "dxgi")
-target_link_libraries(vrperfkit minhook yaml-cpp)
+target_link_libraries(vrperfkit minhook yaml-cpp dxguid)

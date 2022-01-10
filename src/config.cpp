@@ -8,36 +8,34 @@
 namespace fs = std::filesystem;
 
 namespace vrperfkit {
-	namespace {
-		UpscaleMethod MethodFromString(std::string s) {
-			std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
-			if (s == "fsr") {
-				return UpscaleMethod::FSR;
-			}
-			if (s == "nis") {
-				return UpscaleMethod::NIS;
-			}
-			if (s == "cas") {
-				return UpscaleMethod::CAS;
-			}
-			LOG_INFO << "Unknown upscaling method " << s << ", defaulting to FSR";
+	UpscaleMethod MethodFromString(std::string s) {
+		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+		if (s == "fsr") {
 			return UpscaleMethod::FSR;
 		}
-
-		std::string MethodToString(UpscaleMethod method) {
-			switch (method) {
-			case UpscaleMethod::FSR:
-				return "FSR";
-			case UpscaleMethod::NIS:
-				return "NIS";
-			case UpscaleMethod::CAS:
-				return "CAS";
-			}
+		if (s == "nis") {
+			return UpscaleMethod::NIS;
 		}
-
-		std::string PrintToggle(bool toggle) {
-			return toggle ? "enabled" : "disabled";
+		if (s == "cas") {
+			return UpscaleMethod::CAS;
 		}
+		LOG_INFO << "Unknown upscaling method " << s << ", defaulting to FSR";
+		return UpscaleMethod::FSR;
+	}
+
+	std::string MethodToString(UpscaleMethod method) {
+		switch (method) {
+		case UpscaleMethod::FSR:
+			return "FSR";
+		case UpscaleMethod::NIS:
+			return "NIS";
+		case UpscaleMethod::CAS:
+			return "CAS";
+		}
+	}
+
+	std::string PrintToggle(bool toggle) {
+		return toggle ? "enabled" : "disabled";
 	}
 
 	Config g_config;

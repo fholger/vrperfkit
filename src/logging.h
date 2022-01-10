@@ -36,16 +36,7 @@ namespace vrperfkit {
 		}
 
 		LogMessage& operator<<(const UpscaleMethod &method) {
-			switch (method) {
-			case UpscaleMethod::FSR:
-				return *this << "FSR";
-			case UpscaleMethod::NIS:
-				return *this << "NIS";
-			case UpscaleMethod::CAS:
-				return *this << "CAS";
-			}
-
-			return *this << "unknown";
+			return *this << MethodToString(method);
 		}
 
 	private:

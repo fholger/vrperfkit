@@ -39,6 +39,7 @@ namespace vrperfkit {
 		UpscaleMethod upscaleMethod;
 
 		void PrepareUpscaler(ID3D11Texture2D *outputTexture);
+		void SaveTextureToFile(ID3D11Texture2D *texture);
 
 		std::unordered_set<ID3D11SamplerState*> passThroughSamplers;
 		std::unordered_map<ID3D11SamplerState*, ComPtr<ID3D11SamplerState>> mappedSamplers;

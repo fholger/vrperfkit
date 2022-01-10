@@ -55,6 +55,11 @@ namespace {
 		LOG_INFO << "MIP LOD bias is now " << (g_config.upscaling.applyMipBias ? "enabled" : "disabled");
 	}
 
+	void CaptureOutput() {
+		g_config.captureOutput = true;
+		LOG_INFO << "Capturing output...";
+	}
+
 	struct HotkeyDefinition {
 		std::string name;
 		std::function<void()> action;
@@ -70,6 +75,7 @@ namespace {
 			{"decreaseUpscalingSharpness", DecreaseUpscalingSharpness},
 			{"toggleDebugMode", ToggleDebugMode},
 			{"toggleUpscalingApplyMipBias", ToggleUpscalingApplyMipBias},
+			{"captureOutput", CaptureOutput},
 		};
 	}
 

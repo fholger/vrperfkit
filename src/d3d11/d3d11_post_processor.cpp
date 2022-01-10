@@ -6,6 +6,9 @@
 #include "d3d11_nis_upscaler.h"
 #include "logging.h"
 #include "hooks.h"
+#include "ScreenGrab11.h"
+
+#include <sstream>
 
 namespace vrperfkit {
 	namespace {
@@ -66,12 +69,19 @@ namespace vrperfkit {
 
 				RestoreD3D11State(context.Get(), previousState);
 
+				if (g_config.captureOutput && input.eye == 0) {
+					SaveTextureToFile(input.outputTexture);
+				}
+
 				return true;
 			}
 			catch (const std::exception &e) {
 				LOG_ERROR << "Upscaling failed: " << e.what();
 				g_config.upscaling.enabled = false;
 			}
+		}
+		if (g_config.captureOutput && input.eye == 0) {
+			SaveTextureToFile(input.inputTexture);
 		}
 		return false;
 	}
@@ -133,6 +143,30 @@ namespace vrperfkit {
 			UINT size = sizeof(instance);
 			context->SetPrivateData(__uuidof(D3D11PostProcessor), size, &instance);
 			hooks::InstallVirtualFunctionHook("PSSetSamplers", context.Get(), 10, (void*)&D3D11ContextHook_PSSetSamplers);
+		}
+	}
+
+	extern std::filesystem::path g_basePath;
+	void D3D11PostProcessor::SaveTextureToFile(ID3D11Texture2D *texture) {
+		g_config.captureOutput = false;
+
+		static char timeBuf[16];
+		std::time_t now = std::time(nullptr);
+		std::strftime(timeBuf, sizeof(timeBuf), "%Y%m%d_%H%M%S", std::localtime(&now));
+
+		std::wostringstream filename;
+		filename << "capture_" << timeBuf
+				 << "_" << MethodToString(g_config.upscaling.method).c_str()
+				 << "_s" << int(roundf(g_config.upscaling.sharpness * 100))
+				 << "_r" << int(roundf(g_config.upscaling.radius * 100))
+				 << ".dds";
+		std::filesystem::path filePath = g_basePath / filename.str();
+
+		ComPtr<ID3D11DeviceContext> context;
+		device->GetImmediateContext(context.GetAddressOf());
+		HRESULT result = DirectX::SaveDDSTextureToFile( context.Get(), texture, filePath.c_str() );
+		if (FAILED(result)) {
+			LOG_ERROR << "Error taking screen capture: " << std::hex << result << std::dec;
 		}
 	}
 }
