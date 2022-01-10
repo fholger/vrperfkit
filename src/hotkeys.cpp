@@ -15,6 +15,9 @@ namespace {
 			g_config.upscaling.method = vrperfkit::UpscaleMethod::NIS;
 			break;
 		case vrperfkit::UpscaleMethod::NIS:
+			g_config.upscaling.method = vrperfkit::UpscaleMethod::CAS;
+			break;
+		case vrperfkit::UpscaleMethod::CAS:
 			g_config.upscaling.method = vrperfkit::UpscaleMethod::FSR;
 			break;
 		}

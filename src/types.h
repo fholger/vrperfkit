@@ -48,5 +48,6 @@ namespace vrperfkit {
 	enum class UpscaleMethod {
 		FSR,
 		NIS,
+		CAS,
 	};
 }

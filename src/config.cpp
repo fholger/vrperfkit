@@ -17,6 +17,9 @@ namespace vrperfkit {
 			if (s == "nis") {
 				return UpscaleMethod::NIS;
 			}
+			if (s == "cas") {
+				return UpscaleMethod::CAS;
+			}
 			LOG_INFO << "Unknown upscaling method " << s << ", defaulting to FSR";
 			return UpscaleMethod::FSR;
 		}
@@ -27,6 +30,8 @@ namespace vrperfkit {
 				return "FSR";
 			case UpscaleMethod::NIS:
 				return "NIS";
+			case UpscaleMethod::CAS:
+				return "CAS";
 			}
 		}
 

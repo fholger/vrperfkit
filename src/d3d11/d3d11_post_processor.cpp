@@ -1,6 +1,7 @@
 #include "d3d11_post_processor.h"
 
 #include "config.h"
+#include "d3d11_cas_upscaler.h"
 #include "d3d11_fsr_upscaler.h"
 #include "d3d11_nis_upscaler.h"
 #include "logging.h"
@@ -118,6 +119,9 @@ namespace vrperfkit {
 				break;
 			case UpscaleMethod::NIS:
 				upscaler.reset(new D3D11NisUpscaler(device.Get()));
+				break;
+			case UpscaleMethod::CAS:
+				upscaler.reset(new D3D11CasUpscaler(device.Get()));
 				break;
 			}
 

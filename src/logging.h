@@ -41,6 +41,8 @@ namespace vrperfkit {
 				return *this << "FSR";
 			case UpscaleMethod::NIS:
 				return *this << "NIS";
+			case UpscaleMethod::CAS:
+				return *this << "CAS";
 			}
 
 			return *this << "unknown";
