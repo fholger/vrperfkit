@@ -37,6 +37,27 @@ namespace {
 		ovrResult result = vrperfkit::hooks::CallOriginal(ovrHook_EndFrame)(session, frameIndex, viewScaleDesc, modifiedLayers.data(), layerCount);
 		return result;
 	}
+
+	ovrResult ovrHook_SubmitFrame(ovrSession session, long long frameIndex, const ovrViewScaleDesc* viewScaleDesc, ovrLayerHeader const* const* layerPtrList, unsigned int layerCount) {
+		unsigned int eyeLayerIndex;
+		for (eyeLayerIndex = 0; eyeLayerIndex < layerCount; ++eyeLayerIndex) {
+			if (layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFov || layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFovDepth) {
+				break;
+			}
+		}
+
+		std::vector modifiedLayers (layerPtrList, layerPtrList + layerCount);
+		ovrLayerEyeFovDepth eyeLayer;
+		if (eyeLayerIndex != layerCount) {
+			memcpy(&eyeLayer, layerPtrList[eyeLayerIndex], layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFovDepth ? sizeof(ovrLayerEyeFovDepth) : sizeof(ovrLayerEyeFov));
+			modifiedLayers[eyeLayerIndex] = &eyeLayer.Header;
+
+			vrperfkit::g_oculus.OnFrameSubmission(session, eyeLayer);
+		}
+
+		ovrResult result = vrperfkit::hooks::CallOriginal(ovrHook_SubmitFrame)(session, frameIndex, viewScaleDesc, modifiedLayers.data(), layerCount);
+		return result;
+	}
 }
 
 namespace vrperfkit {
@@ -58,6 +79,7 @@ namespace vrperfkit {
 		LOG_INFO << dllName << " is loaded in the process, installing hooks...";
 		hooks::InstallHookInDll("ovr_GetFovTextureSize", handle, (void*)ovrHook_GetFovTextureSize);
 		hooks::InstallHookInDll("ovr_EndFrame", handle, (void*)ovrHook_EndFrame);
+		hooks::InstallHookInDll("ovr_SubmitFrame", handle, (void*)ovrHook_SubmitFrame);
 
 		g_oculusDll = handle;
 	}
