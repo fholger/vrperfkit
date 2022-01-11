@@ -8,6 +8,26 @@
 
 namespace {
 	HMODULE g_oculusDll = nullptr;
+	uint32_t g_oculusVersion = 0;
+
+	struct OVR_ALIGNAS(OVR_PTR_SIZE) ovrOldLayerHeader {
+	  ovrLayerType Type;
+	  unsigned Flags;
+	};
+
+	struct OVR_ALIGNAS(OVR_PTR_SIZE) ovrOldLayerEyeFov {
+	  ovrOldLayerHeader Header;
+	  ovrTextureSwapChain ColorTexture[ovrEye_Count];
+	  ovrRecti Viewport[ovrEye_Count];
+	  ovrFovPort Fov[ovrEye_Count];
+	  ovrPosef RenderPose[ovrEye_Count];
+	  double SensorSampleTime;
+	};
+
+	struct OVR_ALIGNAS(OVR_PTR_SIZE) ovrOldLayerEyeFovDepth : public ovrOldLayerEyeFov {
+	  ovrTextureSwapChain DepthTexture[ovrEye_Count];
+	  ovrTimewarpProjectionDesc ProjectionDesc;
+	};
 
 	ovrSizei ovrHook_GetFovTextureSize(ovrSession session, ovrEyeType eye, ovrFovPort fov, float pixelsPerDisplayPixel) {
 		ovrSizei result = vrperfkit::hooks::CallOriginal(ovrHook_GetFovTextureSize)(session, eye, fov, pixelsPerDisplayPixel);
@@ -17,7 +37,19 @@ namespace {
 		return result;
 	}
 
-	ovrResult ovrHook_EndFrame(ovrSession session, long long frameIndex, const ovrViewScaleDesc* viewScaleDesc, ovrLayerHeader const* const* layerPtrList, unsigned int layerCount) {
+	void CopyEyeLayer(const ovrLayerHeader *inputLayer, ovrLayerEyeFovDepth &outputLayer) {
+		outputLayer.Header.Type = inputLayer->Type;
+		outputLayer.Header.Flags = inputLayer->Flags;
+
+		// work around the Reserved field added to the header in v25
+		const ovrLayerEyeFov *eyeLayer = (g_oculusVersion < 25)
+			? (const ovrLayerEyeFov *)((uint8_t*)inputLayer - sizeof(ovrLayerHeader::Reserved))
+			: (const ovrLayerEyeFov *)inputLayer;
+
+		memcpy(&outputLayer.ColorTexture[0], eyeLayer->ColorTexture[0], inputLayer->Type == ovrLayerType_EyeFovDepth ? sizeof(ovrLayerEyeFovDepth) : sizeof(ovrLayerEyeFov));
+	}
+
+	void HandleOldFrameSubmission(ovrSession session, ovrOldLayerHeader const * const *layerPtrList, uint32_t layerCount, std::vector<const ovrOldLayerHeader*> &modifiedLayers, ovrOldLayerEyeFovDepth &eyeLayer) {
 		unsigned int eyeLayerIndex;
 		for (eyeLayerIndex = 0; eyeLayerIndex < layerCount; ++eyeLayerIndex) {
 			if (layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFov || layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFovDepth) {
@@ -25,38 +57,90 @@ namespace {
 			}
 		}
 
-		std::vector modifiedLayers (layerPtrList, layerPtrList + layerCount);
-		ovrLayerEyeFovDepth eyeLayer;
+		modifiedLayers.assign(layerPtrList, layerPtrList + layerCount);
+		if (eyeLayerIndex != layerCount) {
+			memcpy(&eyeLayer, layerPtrList[eyeLayerIndex], layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFovDepth ? sizeof(ovrOldLayerEyeFovDepth) : sizeof(ovrOldLayerEyeFov));
+			modifiedLayers[eyeLayerIndex] = &eyeLayer.Header;
+
+			ovrLayerEyeFovDepth newLayer;
+			newLayer.Header.Type = eyeLayer.Header.Type;
+			newLayer.Header.Flags = eyeLayer.Header.Flags;
+			memcpy(&newLayer.ColorTexture[0], &eyeLayer.ColorTexture[0], sizeof(eyeLayer) - sizeof(eyeLayer.Header));
+
+			vrperfkit::g_oculus.OnFrameSubmission(session, newLayer);
+
+			memcpy(&eyeLayer.ColorTexture[0], &newLayer.ColorTexture[0], sizeof(eyeLayer) - sizeof(eyeLayer.Header));
+		} 
+	}
+
+	void HandleFrameSubmission(ovrSession session, ovrLayerHeader const * const *layerPtrList, uint32_t layerCount, std::vector<const ovrLayerHeader*> &modifiedLayers, ovrLayerEyeFovDepth &eyeLayer) {
+		unsigned int eyeLayerIndex;
+		for (eyeLayerIndex = 0; eyeLayerIndex < layerCount; ++eyeLayerIndex) {
+			if (layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFov || layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFovDepth) {
+				break;
+			}
+		}
+
+		modifiedLayers.assign(layerPtrList, layerPtrList + layerCount);
 		if (eyeLayerIndex != layerCount) {
 			memcpy(&eyeLayer, layerPtrList[eyeLayerIndex], layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFovDepth ? sizeof(ovrLayerEyeFovDepth) : sizeof(ovrLayerEyeFov));
 			modifiedLayers[eyeLayerIndex] = &eyeLayer.Header;
 
 			vrperfkit::g_oculus.OnFrameSubmission(session, eyeLayer);
 		} 
-
-		ovrResult result = vrperfkit::hooks::CallOriginal(ovrHook_EndFrame)(session, frameIndex, viewScaleDesc, modifiedLayers.data(), layerCount);
-		return result;
 	}
 
-	ovrResult ovrHook_SubmitFrame(ovrSession session, long long frameIndex, const ovrViewScaleDesc* viewScaleDesc, ovrLayerHeader const* const* layerPtrList, unsigned int layerCount) {
-		unsigned int eyeLayerIndex;
-		for (eyeLayerIndex = 0; eyeLayerIndex < layerCount; ++eyeLayerIndex) {
-			if (layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFov || layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFovDepth) {
-				break;
-			}
+	ovrResult ovrHook_EndFrame(ovrSession session, long long frameIndex, const ovrViewScaleDesc* viewScaleDesc, void const* const* layerPtrList, unsigned int layerCount) {
+		if (g_oculusVersion < 25) {
+			ovrOldLayerEyeFovDepth eyeLayer;
+			std::vector<const ovrOldLayerHeader*> modifiedLayers;
+			HandleOldFrameSubmission(session, (ovrOldLayerHeader const * const *)layerPtrList, layerCount, modifiedLayers, eyeLayer);
+			return vrperfkit::hooks::CallOriginal(ovrHook_EndFrame)(session, frameIndex, viewScaleDesc, (const void**)modifiedLayers.data(), layerCount);
 		}
-
-		std::vector modifiedLayers (layerPtrList, layerPtrList + layerCount);
-		ovrLayerEyeFovDepth eyeLayer;
-		if (eyeLayerIndex != layerCount) {
-			memcpy(&eyeLayer, layerPtrList[eyeLayerIndex], layerPtrList[eyeLayerIndex]->Type == ovrLayerType_EyeFovDepth ? sizeof(ovrLayerEyeFovDepth) : sizeof(ovrLayerEyeFov));
-			modifiedLayers[eyeLayerIndex] = &eyeLayer.Header;
-
-			vrperfkit::g_oculus.OnFrameSubmission(session, eyeLayer);
+		else {
+			ovrLayerEyeFovDepth eyeLayer;
+			std::vector<const ovrLayerHeader*> modifiedLayers;
+			HandleFrameSubmission(session, (ovrLayerHeader const * const *)layerPtrList, layerCount, modifiedLayers, eyeLayer);
+			return vrperfkit::hooks::CallOriginal(ovrHook_EndFrame)(session, frameIndex, viewScaleDesc, (const void**)modifiedLayers.data(), layerCount);
 		}
+	}
 
-		ovrResult result = vrperfkit::hooks::CallOriginal(ovrHook_SubmitFrame)(session, frameIndex, viewScaleDesc, modifiedLayers.data(), layerCount);
-		return result;
+	ovrResult ovrHook_SubmitFrame2(ovrSession session, long long frameIndex, const ovrViewScaleDesc* viewScaleDesc, void const* const* layerPtrList, unsigned int layerCount) {
+		LOG_DEBUG << "ovr_SubmitFrame2 called";
+		if (g_oculusVersion < 25) {
+			ovrOldLayerEyeFovDepth eyeLayer;
+			std::vector<const ovrOldLayerHeader*> modifiedLayers;
+			HandleOldFrameSubmission(session, (ovrOldLayerHeader const * const *)layerPtrList, layerCount, modifiedLayers, eyeLayer);
+			return vrperfkit::hooks::CallOriginal(ovrHook_SubmitFrame2)(session, frameIndex, viewScaleDesc, (const void**)modifiedLayers.data(), layerCount);
+		}
+		else {
+			ovrLayerEyeFovDepth eyeLayer;
+			std::vector<const ovrLayerHeader*> modifiedLayers;
+			HandleFrameSubmission(session, (ovrLayerHeader const * const *)layerPtrList, layerCount, modifiedLayers, eyeLayer);
+			return vrperfkit::hooks::CallOriginal(ovrHook_SubmitFrame2)(session, frameIndex, viewScaleDesc, (const void**)modifiedLayers.data(), layerCount);
+		}
+	}
+
+	ovrResult ovrHook_SubmitFrame(ovrSession session, long long frameIndex, const void* viewScaleDesc, void const* const* layerPtrList, unsigned int layerCount) {
+		LOG_DEBUG << "ovr_SubmitFrame called";
+		if (g_oculusVersion < 25) {
+			ovrOldLayerEyeFovDepth eyeLayer;
+			std::vector<const ovrOldLayerHeader*> modifiedLayers;
+			HandleOldFrameSubmission(session, (ovrOldLayerHeader const * const *)layerPtrList, layerCount, modifiedLayers, eyeLayer);
+			return vrperfkit::hooks::CallOriginal(ovrHook_SubmitFrame)(session, frameIndex, viewScaleDesc, (const void**)modifiedLayers.data(), layerCount);
+		}
+		else {
+			ovrLayerEyeFovDepth eyeLayer;
+			std::vector<const ovrLayerHeader*> modifiedLayers;
+			HandleFrameSubmission(session, (ovrLayerHeader const * const *)layerPtrList, layerCount, modifiedLayers, eyeLayer);
+			return vrperfkit::hooks::CallOriginal(ovrHook_SubmitFrame)(session, frameIndex, viewScaleDesc, (const void**)modifiedLayers.data(), layerCount);
+		}
+	}
+
+	ovrResult ovrHook_Initialize(const ovrInitParams* params) {
+		g_oculusVersion = params->RequestedMinorVersion;
+		LOG_INFO << "Oculus runtime initialization for version " << g_oculusVersion;
+		return vrperfkit::hooks::CallOriginal(ovrHook_Initialize)(params);
 	}
 }
 
@@ -77,9 +161,11 @@ namespace vrperfkit {
 		}
 
 		LOG_INFO << dllName << " is loaded in the process, installing hooks...";
+		hooks::InstallHookInDll("ovr_Initialize", handle, (void*)ovrHook_Initialize);
 		hooks::InstallHookInDll("ovr_GetFovTextureSize", handle, (void*)ovrHook_GetFovTextureSize);
 		hooks::InstallHookInDll("ovr_EndFrame", handle, (void*)ovrHook_EndFrame);
 		hooks::InstallHookInDll("ovr_SubmitFrame", handle, (void*)ovrHook_SubmitFrame);
+		hooks::InstallHookInDll("ovr_SubmitFrame2", handle, (void*)ovrHook_SubmitFrame2);
 
 		g_oculusDll = handle;
 	}
