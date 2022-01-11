@@ -1,18 +1,68 @@
+# Upscaling: render the game at a lower resolution (thus saving performance),
+# then upscale the image to the target resolution to regain some of the lost
+# visual fidelity.
 upscaling:
+  # enable (true) or disable (false) upscaling
   enabled: true
+  # method to use for upscaling. Available options (all of them work on all GPUs):
+  # - fsr (AMD FidelityFX Super Resolution)
+  # - nis (NVIDIA Image Scaling)
+  # - cas (AMD FidelityFX Contrast Adaptive Sharpening)
   method: fsr
+  # control how much the render resolution is lowered. The renderScale factor is
+  # applied to both width and height. So if renderScale is set to 0.5 and you
+  # have a resolution of 2000x2000 configured in SteamVR, the resulting render
+  # resolution is 1000x1000.
+  # NOTE: this is different from how render scale works in SteamVR! A SteamVR
+  # render scale of 0.5 would be equivalent to renderScale 0.707 in this mod!
   renderScale: 0.77
+  # configure how much the image is sharpened during upscaling.
+  # This parameter works differently for each of the upscaling methods, so you
+  # will have to tweak it after you have chosen your preferred upscaling method.
   sharpness: 0.7
+  # Performance optimization: only apply the (more expensive) upscaling method
+  # to an inner area of the rendered image and use cheaper bilinear sampling on
+  # the rest of the image. The radius parameter determines how large the area
+  # with the more expensive upscaling is. Upscaling happens within a circle
+  # centered at the projection centre of the eyes. You can use debugMode (below)
+  # to visualize the size of the circle.
+  # Note: to disable this optimization entirely, choose an arbitrary high value
+  # (e.g. 100) for the radius.
   radius: 0.6
+  # when enables, applies a MIP bias to texture sampling in the game. This will
+  # make the game treat texture lookups as if it were rendering at the higher
+  # target resolution, which can improve image quality a little bit. However,
+  # it can also cause render artifacts in rare circumstances. So if you experience
+  # issues, you may want to turn this off.
   applyMipBias: true
 
+# Enabling debugMode will visualize the radius to which upscaling is applied (see above).
+# It will also output additional log messages and regularly report how much GPU frame time
+# the post-processing costs.
 debugMode: false
 
+# Hotkeys allow you to modify certain settings of the mod on the fly, which is useful
+# for direct comparsions inside the headset. Note that any changes you make via hotkeys
+# are not currently persisted in the config file and will reset to the values in the
+# config file when you next launch the game.
 hotkeys:
+  # enable or disable hotkeys; if they cause conflicts with ingame hotkeys, you can either
+  # configure them to different keys or just turn them off
   enabled: true
+  # toggles debugMode
   toggleDebugMode: ["ctrl", "f1"]
-  increaseUpscalingRadius: ["ctrl", "f2"]
-  decreaseUpscalingRadius: ["ctrl", "f3"]
-  increaseUpscalingSharpness: ["ctrl", "f4"]
-  decreaseUpscalingSharpness: ["ctrl", "f5"]
-  toggleUpscalingApplyMipBias: ["ctrl", "f6"]
+  # cycle through the available upscaling methods
+  cycleUpscalingMethod: ["ctrl", "f2"]
+  # increase the upscaling circle's radius (see above) by 0.05
+  increaseUpscalingRadius: ["ctrl", "f3"]
+  # decrease the upscaling circle's radius (see above) by 0.05
+  decreaseUpscalingRadius: ["ctrl", "f4"]
+  # increase the upscaling sharpness (see above) by 0.05
+  increaseUpscalingSharpness: ["ctrl", "f5"]
+  # decrease the upscaling sharpness (see above) by 0.05
+  decreaseUpscalingSharpness: ["ctrl", "f6"]
+  # toggle the application of MIP bias (see above)
+  toggleUpscalingApplyMipBias: ["ctrl", "f7"]
+  # take a screen grab of the final (post-processed, upscaled) image.
+  # The screen grab is stored as a dds file next to the DLL.
+  captureOutput: ["ctrl", "f8"]

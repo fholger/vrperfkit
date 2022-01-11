@@ -6,17 +6,22 @@ Performance-oriented collection of mods for VR games.
 Included mods:
 
 * Upscaling techniques (render at lower resolution and upscale to target resolution)
-	* AMD FidelityFX Super Resolution (in alpha)
-	* NVIDIA Image Scaling (not yet implemented)
-	* AMD Contrast Adaptive Sharpening (not yet implemented)
+  * AMD FidelityFX Super Resolution
+  * NVIDIA Image Scaling
+  * AMD Contrast Adaptive Sharpening
+
+Planned mods:
+
 * "Fixed foveated" rendering (render fewer pixels at the edges of the screen)
-	* Variable Rate Shading (only for NVIDIA RTX / GTX 16xx cards) (not yet implemented)
-	* Radial Density Masking (all GPUs, but works only with a handful of games) (not yet implemented)
+  * Variable Rate Shading (only for NVIDIA RTX / GTX 16xx cards)
+  * Radial Density Masking (all GPUs, but works only with a handful of games)
+* Force hidden area mask: don't render pixels at the edges that are not visible in the headset.
+  Many games already use this mask, but not all. This mod will allow you to force its usage.
 
 Supported VR runtimes:
 
 * Oculus (in alpha)
-* OpenVR (not yet implemented)
+* OpenVR
 
 ## Installation
 
