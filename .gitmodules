@@ -10,3 +10,6 @@
 [submodule "ThirdParty/Vulkan-Headers"]
 	path = ThirdParty/Vulkan-Headers
 	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+[submodule "ThirdParty/openvr"]
+	path = ThirdParty/openvr
+	url = https://github.com/ValveSoftware/openvr.git
