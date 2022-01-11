@@ -151,7 +151,6 @@ namespace vrperfkit {
 	}
 
 	void OpenVrManager::PreCompositorWorkCall(bool transition) {
-		LOG_DEBUG << "PreCompositorWorkCall";
 		if (graphicsApi != GraphicsApi::DXVK || dxvkRes->dxvkDevice == nullptr) {
 			return;
 		}
@@ -178,7 +177,6 @@ namespace vrperfkit {
 	}
 
 	void OpenVrManager::PostCompositorWorkCall(bool transition) {
-		LOG_DEBUG << "PostCompositorWorkCall";
 		if (graphicsApi != GraphicsApi::DXVK || dxvkRes->dxvkDevice == nullptr) {
 			return;
 		}

@@ -37,7 +37,6 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryA)(lpFileName);
 
 		if (handle != nullptr && handle != vrperfkit::g_moduleSelf) {
-			LOG_DEBUG << "LoadLibraryA " << lpFileName;
 			InstallVrHooks();
 		}
 
@@ -48,7 +47,6 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryExA)(lpFileName, hFile, dwFlags);
 
 		if (handle != nullptr && handle != vrperfkit::g_moduleSelf && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
-			LOG_DEBUG << "LoadLibraryExA " << lpFileName;
 			InstallVrHooks();
 		}
 
@@ -56,10 +54,11 @@ namespace {
 	}
 
 	HMODULE WINAPI Hook_LoadLibraryW(LPCWSTR lpFileName) {
-		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryW)(lpFileName);
+		// necessary, or else VS merges this function with Hook_LoadLibraryA and assigns them the same address
+		std::wstring fileName (lpFileName);
+		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryW)(fileName.c_str());
 
 		if (handle != nullptr && handle != vrperfkit::g_moduleSelf) {
-			LOG_DEBUG << "LoadLibraryW " << lpFileName;
 			InstallVrHooks();
 		}
 
@@ -67,10 +66,10 @@ namespace {
 	}
 
 	HMODULE WINAPI Hook_LoadLibraryExW(LPCWSTR lpFileName, HANDLE hFile, DWORD dwFlags) {
-		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryExW)(lpFileName, hFile, dwFlags);
+		std::wstring fileName (lpFileName);
+		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryExW)(fileName.c_str(), hFile, dwFlags);
 
 		if (handle != nullptr && handle != vrperfkit::g_moduleSelf && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
-			LOG_DEBUG << "LoadLibraryExW " << lpFileName;
 			InstallVrHooks();
 		}
 

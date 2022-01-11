@@ -215,7 +215,7 @@ namespace vrperfkit {
 				float avgTimeMs = 1000.f / countedQueries * summedGpuTime;
 				// queries are done per eye, but we want the average for both eyes per frame
 				avgTimeMs *= 2;
-				LOG_INFO << "Average GPU processing time for post-processing: " << avgTimeMs << " ms\n";
+				LOG_INFO << "Average GPU processing time for post-processing: " << avgTimeMs << " ms";
 				countedQueries = 0;
 				summedGpuTime = 0.f;
 			}

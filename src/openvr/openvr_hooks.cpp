@@ -25,11 +25,9 @@ namespace vrperfkit {
 		}
 
 		vr::EVRCompositorError IVRCompositor009Hook_Submit(vr::IVRCompositor *self, vr::EVREye eEye, const vr::Texture_t *pTexture, const vr::VRTextureBounds_t *pBounds, vr::EVRSubmitFlags nSubmitFlags) {
-			LOG_DEBUG << "Submit";
 			OpenVrSubmitInfo info { eEye, pTexture, pBounds, nSubmitFlags };
 			g_openVr.OnSubmit(info);
 			g_openVr.PreCompositorWorkCall(true);
-			LOG_DEBUG << "Submitting texture of type " << info.texture->eType;
 			auto error = hooks::CallOriginal(IVRCompositor009Hook_Submit)(self, info.eye, info.texture, info.bounds, info.submitFlags);
 			if (error != vr::VRCompositorError_None) {
 				LOG_ERROR << "OpenVR submit failed: " << error;
@@ -60,7 +58,6 @@ namespace vrperfkit {
 
 		vr::EVRCompositorError IVRCompositorHook_WaitGetPoses(vr::IVRCompositor *self, vr::TrackedDevicePose_t *pRenderPoseArray, uint32_t unRenderPoseArrayCount,
 				vr::TrackedDevicePose_t *pGamePoseArray, uint32_t unGamePoseArrayCount) {
-			LOG_DEBUG << "WaitGetPoses";
 			g_openVr.PreCompositorWorkCall();
 			auto error = hooks::CallOriginal(IVRCompositorHook_WaitGetPoses)(self, pRenderPoseArray, unRenderPoseArrayCount, pGamePoseArray, unGamePoseArrayCount);
 			g_openVr.PostCompositorWorkCall();
@@ -71,7 +68,6 @@ namespace vrperfkit {
 		}
 
 		void IVRCompositorHook_PostPresentHandoff(vr::IVRCompositor *self) {
-			LOG_DEBUG << "PostPresentHandoff";
 			g_openVr.PreCompositorWorkCall();
 			hooks::CallOriginal(IVRCompositorHook_PostPresentHandoff)(self);
 			g_openVr.PostCompositorWorkCall();
