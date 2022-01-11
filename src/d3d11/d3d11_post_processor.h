@@ -35,6 +35,7 @@ namespace vrperfkit {
 
 	private:
 		ComPtr<ID3D11Device> device;
+		ComPtr<ID3D11DeviceContext> context;
 		std::unique_ptr<D3D11Upscaler> upscaler;
 		UpscaleMethod upscaleMethod;
 
@@ -44,5 +45,20 @@ namespace vrperfkit {
 		std::unordered_set<ID3D11SamplerState*> passThroughSamplers;
 		std::unordered_map<ID3D11SamplerState*, ComPtr<ID3D11SamplerState>> mappedSamplers;
 		float mipLodBias = 0.0f;
+
+		struct ProfileQuery {
+			ComPtr<ID3D11Query> queryDisjoint;
+			ComPtr<ID3D11Query> queryStart;
+			ComPtr<ID3D11Query> queryEnd;
+		};
+		static const int QUERY_COUNT = 6;
+		ProfileQuery profileQueries[QUERY_COUNT];
+		int currentQuery = 0;
+		float summedGpuTime = 0.0f;
+		int countedQueries = 0;
+
+		void CreateProfileQueries();
+		void StartProfiling();
+		void EndProfiling();
 	};
 }

@@ -26,19 +26,23 @@ namespace vrperfkit {
 		}
 	}
 
-	D3D11PostProcessor::D3D11PostProcessor(ComPtr<ID3D11Device> device) : device(device) {}
+	D3D11PostProcessor::D3D11PostProcessor(ComPtr<ID3D11Device> device) : device(device) {
+		device->GetImmediateContext(context.GetAddressOf());
+	}
 
 	D3D11PostProcessor::~D3D11PostProcessor() {
-		ComPtr<ID3D11DeviceContext> context;
-		device->GetImmediateContext(context.GetAddressOf());
 		context->SetPrivateData(__uuidof(D3D11PostProcessor), 0, nullptr);
 	}
 
 	bool D3D11PostProcessor::Apply(const D3D11PostProcessInput &input, Viewport &outputViewport) {
+		bool didPostprocessing = false;
+
+		if (g_config.debugMode) {
+			StartProfiling();
+		}
+
 		if (g_config.upscaling.enabled) {
 			try {
-				ComPtr<ID3D11DeviceContext> context;
-				device->GetImmediateContext(context.GetAddressOf());
 				D3D11State previousState;
 				StoreD3D11State(context.Get(), previousState);
 
@@ -69,21 +73,23 @@ namespace vrperfkit {
 
 				RestoreD3D11State(context.Get(), previousState);
 
-				if (g_config.captureOutput && input.eye == 0) {
-					SaveTextureToFile(input.outputTexture);
-				}
-
-				return true;
+				didPostprocessing = true;
 			}
 			catch (const std::exception &e) {
 				LOG_ERROR << "Upscaling failed: " << e.what();
 				g_config.upscaling.enabled = false;
 			}
 		}
-		if (g_config.captureOutput && input.eye == 0) {
-			SaveTextureToFile(input.inputTexture);
+
+		if (g_config.debugMode) {
+			EndProfiling();
 		}
-		return false;
+
+		if (g_config.captureOutput && input.eye == 0) {
+			SaveTextureToFile(didPostprocessing ? input.outputTexture : input.inputTexture);
+		}
+
+		return didPostprocessing;
 	}
 
 	void D3D11PostProcessor::OnPSSetSamplers(ID3D11SamplerState **samplers, UINT numSamplers) {
@@ -137,8 +143,6 @@ namespace vrperfkit {
 
 			passThroughSamplers.clear();
 			mappedSamplers.clear();
-			ComPtr<ID3D11DeviceContext> context;
-			device->GetImmediateContext(context.GetAddressOf());
 			D3D11PostProcessor *instance = this;
 			UINT size = sizeof(instance);
 			context->SetPrivateData(__uuidof(D3D11PostProcessor), size, &instance);
@@ -162,11 +166,59 @@ namespace vrperfkit {
 				 << ".dds";
 		std::filesystem::path filePath = g_basePath / filename.str();
 
-		ComPtr<ID3D11DeviceContext> context;
-		device->GetImmediateContext(context.GetAddressOf());
 		HRESULT result = DirectX::SaveDDSTextureToFile( context.Get(), texture, filePath.c_str() );
 		if (FAILED(result)) {
 			LOG_ERROR << "Error taking screen capture: " << std::hex << result << std::dec;
+		}
+	}
+
+	void D3D11PostProcessor::CreateProfileQueries() {
+		for (auto &profileQuery : profileQueries) {
+			D3D11_QUERY_DESC qd;
+			qd.Query = D3D11_QUERY_TIMESTAMP;
+			qd.MiscFlags = 0;
+			device->CreateQuery(&qd, profileQuery.queryStart.ReleaseAndGetAddressOf());
+			device->CreateQuery(&qd, profileQuery.queryEnd.ReleaseAndGetAddressOf());
+			qd.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
+			device->CreateQuery(&qd, profileQuery.queryDisjoint.ReleaseAndGetAddressOf());
+		}
+	}
+
+	void D3D11PostProcessor::StartProfiling() {
+		if (profileQueries[0].queryStart == nullptr) {
+			CreateProfileQueries();
+		}
+
+		context->Begin(profileQueries[currentQuery].queryDisjoint.Get());
+		context->End(profileQueries[currentQuery].queryStart.Get());
+	}
+
+	void D3D11PostProcessor::EndProfiling() {
+		context->End(profileQueries[currentQuery].queryEnd.Get());
+		context->End(profileQueries[currentQuery].queryDisjoint.Get());
+
+		currentQuery = (currentQuery + 1) % QUERY_COUNT;
+		while (context->GetData(profileQueries[currentQuery].queryDisjoint.Get(), nullptr, 0, 0) == S_FALSE) {
+			Sleep(1);
+		}
+		D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjoint;
+		HRESULT result = context->GetData(profileQueries[currentQuery].queryDisjoint.Get(), &disjoint, sizeof(disjoint), 0);
+		if (result == S_OK && !disjoint.Disjoint) {
+			UINT64 begin, end;
+			context->GetData(profileQueries[currentQuery].queryStart.Get(), &begin, sizeof(UINT64), 0);
+			context->GetData(profileQueries[currentQuery].queryEnd.Get(), &end, sizeof(UINT64), 0);
+			float duration = (end - begin) / float(disjoint.Frequency);
+			summedGpuTime += duration;
+			++countedQueries;
+
+			if (countedQueries >= 500) {
+				float avgTimeMs = 1000.f / countedQueries * summedGpuTime;
+				// queries are done per eye, but we want the average for both eyes per frame
+				avgTimeMs *= 2;
+				LOG_INFO << "Average GPU processing time for post-processing: " << avgTimeMs << " ms\n";
+				countedQueries = 0;
+				summedGpuTime = 0.f;
+			}
 		}
 	}
 }
