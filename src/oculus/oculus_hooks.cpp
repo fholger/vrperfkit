@@ -106,7 +106,6 @@ namespace {
 	}
 
 	ovrResult ovrHook_SubmitFrame2(ovrSession session, long long frameIndex, const ovrViewScaleDesc* viewScaleDesc, void const* const* layerPtrList, unsigned int layerCount) {
-		LOG_DEBUG << "ovr_SubmitFrame2 called";
 		if (g_oculusVersion < 25) {
 			ovrOldLayerEyeFovDepth eyeLayer;
 			std::vector<const ovrOldLayerHeader*> modifiedLayers;
@@ -122,7 +121,6 @@ namespace {
 	}
 
 	ovrResult ovrHook_SubmitFrame(ovrSession session, long long frameIndex, const void* viewScaleDesc, void const* const* layerPtrList, unsigned int layerCount) {
-		LOG_DEBUG << "ovr_SubmitFrame called";
 		if (g_oculusVersion < 25) {
 			ovrOldLayerEyeFovDepth eyeLayer;
 			std::vector<const ovrOldLayerHeader*> modifiedLayers;

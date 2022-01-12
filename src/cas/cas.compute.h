@@ -30,14 +30,14 @@ void CasInput(inout AF1 r, inout AF1 g, inout AF1 b) {}
 #include "ffx_cas.h"
 
 #if CAS_SHARPEN_ONLY
-bool sharpenOnly = true;
+#define WITHOUT_UPSCALE true
 #else
-bool sharpenOnly = false;
+#define WITHOUT_UPSCALE false
 #endif
 
 void Cas(int2 pos) {
 	AF3 c;
-	CasFilter(c.r, c.g, c.b, pos, const0, const1, sharpenOnly);
+	CasFilter(c.r, c.g, c.b, pos, const0, const1, WITHOUT_UPSCALE);
 	OutputTexture[ASU2(pos)+outputOffset] = AF4(c, 1);
 }
 
