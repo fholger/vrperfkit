@@ -140,6 +140,8 @@ include_directories(
 )
 
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+# do not merge functions with identical bodies; we need them to be separate entities for hooking purposes
+add_link_options("/OPT:NOICF")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	add_definitions(-DWIN64)
