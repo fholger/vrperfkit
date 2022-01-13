@@ -23,6 +23,41 @@ namespace vrperfkit {
 			}
 		}
 
+		ovrTextureFormat DetermineOutputFormat(const ovrTextureSwapChainDesc &desc) {
+			if (desc.MiscFlags & ovrTextureMisc_DX_Typeless) {
+				// if the incoming texture is physically in a typeless state, then we don't need to care
+				// about whether or not it's SRGB
+				return desc.Format;
+			}
+
+			// if the texture is not typeless, then if it is SRGB, applying upscaling will automatically unwrap
+			// the SRGB values in our shader and thus produce non-SRGB values, so we need to use a non-SRGB
+			// output format in these instances
+			switch (desc.Format) {
+			case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
+				return OVR_FORMAT_B8G8R8A8_UNORM;
+			case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
+				return OVR_FORMAT_B8G8R8X8_UNORM;
+			case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
+				return OVR_FORMAT_R8G8B8A8_UNORM;
+			default:
+				return desc.Format;
+			}
+		}
+
+		bool ShouldCreateTypelessSwapchain(ovrTextureFormat format) {
+			switch (format) {
+			case OVR_FORMAT_B8G8R8A8_UNORM_SRGB:
+			case OVR_FORMAT_B8G8R8A8_UNORM:
+			case OVR_FORMAT_B8G8R8X8_UNORM_SRGB:
+			case OVR_FORMAT_B8G8R8X8_UNORM:
+			case OVR_FORMAT_R8G8B8A8_UNORM_SRGB:
+			case OVR_FORMAT_R8G8B8A8_UNORM:
+				return true;
+			default:
+				return false;
+			}
+		}
 	}
 
 	OculusManager g_oculus;
@@ -146,6 +181,8 @@ namespace vrperfkit {
 
 			ovrTextureSwapChainDesc chainDesc;
 			Check("getting swapchain description", ovr_GetTextureSwapChainDesc(session, submittedEyeChains[eye], &chainDesc));
+			LOG_INFO << "Swap chain has format " << chainDesc.Format << ", bind flags " << chainDesc.BindFlags << " and misc flags " << chainDesc.MiscFlags;
+			ovrTextureFormat outputFormat = DetermineOutputFormat(chainDesc);
 			if (chainDesc.SampleCount > 1) {
 				LOG_INFO << "Submitted textures are multi-sampled, creating resolve texture";
 				d3d11Res->resolveTexture[eye] = CreateResolveTexture(d3d11Res->device.Get(), d3d11Res->submittedTextures[0][0].Get());
@@ -163,13 +200,16 @@ namespace vrperfkit {
 			chainDesc.SampleCount = 1;
 			chainDesc.MipLevels = 1;
 			chainDesc.BindFlags = ovrTextureBind_DX_UnorderedAccess;
-			// fixme: may need some adjustments from actual types
-			chainDesc.MiscFlags = ovrTextureMisc_DX_Typeless;
-			chainDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM;
+			chainDesc.MiscFlags = ovrTextureMisc_AutoGenerateMips;
+			if (ShouldCreateTypelessSwapchain(outputFormat)) {
+				chainDesc.MiscFlags = chainDesc.MiscFlags | ovrTextureMisc_DX_Typeless;
+			}
+			chainDesc.Format = outputFormat;
 			chainDesc.StaticImage = false;
 			LOG_INFO << "Eye " << eye << ": submitted textures have resolution " << chainDesc.Width << "x" << chainDesc.Height;
 			AdjustOutputResolution(chainDesc.Width, chainDesc.Height);
 			LOG_INFO << "Eye " << eye << ": output resolution is " << chainDesc.Width << "x" << chainDesc.Height;
+			LOG_INFO << "Creating output swapchain in format " << chainDesc.Format;
 			Check("creating output swapchain", ovr_CreateTextureSwapChainDX(session, d3d11Res->device.Get(), &chainDesc, &outputEyeChains[eye]));
 
 			Check("getting texture swapchain length", ovr_GetTextureSwapChainLength(session, outputEyeChains[eye], &length));
