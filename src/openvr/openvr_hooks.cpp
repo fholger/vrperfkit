@@ -94,6 +94,8 @@ namespace vrperfkit {
 			hooks::RemoveHook((void*)IVRCompositor008Hook_Submit);
 			hooks::RemoveHook((void*)IVRCompositor007Hook_Submit);
 			hooks::RemoveHook((void*)IVRSystemHook_GetRecommendedRenderTargetSize);
+			hooks::RemoveHook((void*)IVRCompositorHook_WaitGetPoses);
+			hooks::RemoveHook((void*)IVRCompositorHook_PostPresentHandoff);
 			g_compositorVersion = 0;
 			g_systemVersion = 0;
 		}

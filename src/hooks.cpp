@@ -6,7 +6,12 @@
 #include <unordered_map>
 
 namespace {
-	std::unordered_map<intptr_t, intptr_t> g_hooksToOriginal;
+	struct HookInfo {
+		intptr_t target;
+		intptr_t original;
+		intptr_t hook;
+	};
+	std::unordered_map<intptr_t, HookInfo> g_hooksToOriginal;
 }
 
 namespace vrperfkit {
@@ -39,15 +44,24 @@ namespace vrperfkit {
 				return;
 			}
 
-			g_hooksToOriginal[reinterpret_cast<intptr_t>(detour)] = reinterpret_cast<intptr_t>(pOriginal);
+			g_hooksToOriginal[reinterpret_cast<intptr_t>(detour)] = HookInfo {
+				reinterpret_cast<intptr_t>(pTarget),
+				reinterpret_cast<intptr_t>(pOriginal),
+				reinterpret_cast<intptr_t>(detour),
+			};
 		}
 
 		void RemoveHook(void *detour) {
 			auto entry = g_hooksToOriginal.find(reinterpret_cast<intptr_t>(detour));
 			if (entry != g_hooksToOriginal.end()) {
-				void *target = reinterpret_cast<void *>(entry->second);
-				MH_DisableHook(target);
-				MH_RemoveHook(target);
+				void *target = reinterpret_cast<void *>(entry->second.target);
+				LOG_INFO << "Removing hook to " << target;
+				if (MH_STATUS status; (status = MH_DisableHook(target)) != MH_OK) {
+					LOG_ERROR << "Error when disabling hook to " << target << ": " << status;
+				}
+				if (MH_STATUS status; (status = MH_RemoveHook(target)) != MH_OK) {
+					LOG_ERROR << "Error when removing hook to " << target << ": " << status;
+				}
 				g_hooksToOriginal.erase(entry);
 			}
 		}
@@ -60,7 +74,11 @@ namespace vrperfkit {
 				return;
 			}
 
-			g_hooksToOriginal[reinterpret_cast<intptr_t>(detour)] = reinterpret_cast<intptr_t>(pOriginal);
+			g_hooksToOriginal[reinterpret_cast<intptr_t>(detour)] = HookInfo {
+				reinterpret_cast<intptr_t>(target),
+				reinterpret_cast<intptr_t>(pOriginal),
+				reinterpret_cast<intptr_t>(detour),
+			};
 		}
 
 		void InstallHookInDll(const std::string &name, HMODULE module, void *detour) {
@@ -71,7 +89,7 @@ namespace vrperfkit {
 		}
 
 		intptr_t HookToOriginal(intptr_t hook) {
-			return g_hooksToOriginal[hook];
+			return g_hooksToOriginal[hook].original;
 		}
 	}
 }
