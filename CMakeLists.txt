@@ -63,6 +63,8 @@ set(D3D11_FILES
 	src/d3d11/d3d11_nis_upscaler.cpp
 	src/d3d11/d3d11_post_processor.h
 	src/d3d11/d3d11_post_processor.cpp
+	src/d3d11/d3d11_injector.h
+	src/d3d11/d3d11_injector.cpp
 	src/d3d11/ScreenGrab11.h
 	src/d3d11/ScreenGrab11.cpp
 )

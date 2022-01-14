@@ -2,5 +2,6 @@
 CMakeSettings.json
 out
 build
+build.x86
 ThirdParty/LibOVR
 
