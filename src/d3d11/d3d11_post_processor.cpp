@@ -11,27 +11,8 @@
 #include <sstream>
 
 namespace vrperfkit {
-	namespace {
-		void D3D11ContextHook_PSSetSamplers(ID3D11DeviceContext *self, UINT StartSlot, UINT NumSamplers, ID3D11SamplerState * const *ppSamplers) {
-			ID3D11SamplerState *samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-			memcpy(samplers, ppSamplers, NumSamplers * sizeof(ID3D11SamplerState*));
-
-			D3D11PostProcessor *postProcessor = nullptr;
-			UINT size = sizeof(postProcessor);
-			if (SUCCEEDED(self->GetPrivateData(__uuidof(D3D11PostProcessor), &size, &postProcessor)) && postProcessor != nullptr) {
-				postProcessor->OnPSSetSamplers(samplers, NumSamplers);
-			}
-
-			hooks::CallOriginal(D3D11ContextHook_PSSetSamplers)(self, StartSlot, NumSamplers, samplers);
-		}
-	}
-
 	D3D11PostProcessor::D3D11PostProcessor(ComPtr<ID3D11Device> device) : device(device) {
 		device->GetImmediateContext(context.GetAddressOf());
-	}
-
-	D3D11PostProcessor::~D3D11PostProcessor() {
-		context->SetPrivateData(__uuidof(D3D11PostProcessor), 0, nullptr);
 	}
 
 	bool D3D11PostProcessor::Apply(const D3D11PostProcessInput &input, Viewport &outputViewport) {
@@ -92,13 +73,15 @@ namespace vrperfkit {
 		return didPostprocessing;
 	}
 
-	void D3D11PostProcessor::OnPSSetSamplers(ID3D11SamplerState **samplers, UINT numSamplers) {
+	bool D3D11PostProcessor::PrePSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState * const *ppSamplers) {
 		if (!g_config.upscaling.applyMipBias) {
 			passThroughSamplers.clear();
 			mappedSamplers.clear();
-			return;
+			return false;
 		}
 
+		ID3D11SamplerState *samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+		memcpy(samplers, ppSamplers, numSamplers * sizeof(ID3D11SamplerState*));
 		for (UINT i = 0; i < numSamplers; ++i) {
 			ID3D11SamplerState *orig = samplers[i];
 			if (orig == nullptr || passThroughSamplers.find(orig) != passThroughSamplers.end()) {
@@ -122,6 +105,9 @@ namespace vrperfkit {
 
 			samplers[i] = mappedSamplers[orig].Get();
 		}
+
+		context->PSSetSamplers(startSlot, numSamplers, samplers);
+		return true;
 	}
 
 	void D3D11PostProcessor::PrepareUpscaler(ID3D11Texture2D *outputTexture) {
@@ -143,10 +129,6 @@ namespace vrperfkit {
 
 			passThroughSamplers.clear();
 			mappedSamplers.clear();
-			D3D11PostProcessor *instance = this;
-			UINT size = sizeof(instance);
-			context->SetPrivateData(__uuidof(D3D11PostProcessor), size, &instance);
-			hooks::InstallVirtualFunctionHook("PSSetSamplers", context.Get(), 10, (void*)&D3D11ContextHook_PSSetSamplers);
 		}
 	}
 

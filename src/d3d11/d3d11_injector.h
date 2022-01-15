@@ -7,9 +7,8 @@ namespace vrperfkit {
 	class D3D11Listener {
 	public:
 		virtual bool PrePSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState *const *ppSamplers) { return false; }
-		virtual void PostPSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState *const *ppSamplers) {}
 
-	private:
+	protected:
 		~D3D11Listener() = default;
 	};
 
@@ -18,8 +17,10 @@ namespace vrperfkit {
 		explicit D3D11Injector(ComPtr<ID3D11Device> device);
 		~D3D11Injector();
 
+		void AddListener(D3D11Listener *listener);
+		void RemoveListener(D3D11Listener *listener);
+
 		bool PrePSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState *const *ppSamplers);
-		void PostPSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState *const *ppSamplers);
 
 	private:
 		ComPtr<ID3D11Device> device;

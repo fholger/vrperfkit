@@ -41,10 +41,6 @@ namespace vrperfkit {
 			}
 
 			hooks::CallOriginal(D3D11ContextHook_PSSetSamplers)(self, StartSlot, NumSamplers, ppSamplers);
-
-			if (injector != nullptr && !hookGuard.AlreadyInsideHook()) {
-				injector->PostPSSetSamplers(StartSlot, NumSamplers, ppSamplers);
-			}
 		}
 	}
 
@@ -67,6 +63,19 @@ namespace vrperfkit {
 		context->SetPrivateData(__uuidof(D3D11Injector), 0, nullptr);
 	}
 
+	void D3D11Injector::AddListener(D3D11Listener *listener) {
+		if (std::find(listeners.begin(), listeners.end(), listener) == listeners.end()) {
+			listeners.push_back(listener);
+		}
+	}
+
+	void D3D11Injector::RemoveListener(D3D11Listener *listener) {
+		auto it = std::find(listeners.begin(), listeners.end(), listener);
+		if (it != listeners.end()) {
+			listeners.erase(it);
+		}
+	}
+
 	bool D3D11Injector::PrePSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState * const *ppSamplers) {
 		for (D3D11Listener *listener : listeners) {
 			if (listener->PrePSSetSamplers(startSlot, numSamplers, ppSamplers)) {
@@ -75,11 +84,5 @@ namespace vrperfkit {
 		}
 
 		return false;
-	}
-
-	void D3D11Injector::PostPSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState * const *ppSamplers) {
-		for (D3D11Listener *listener : listeners) {
-			listener->PostPSSetSamplers(startSlot, numSamplers, ppSamplers);
-		}
 	}
 }

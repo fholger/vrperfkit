@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "d3d11_helper.h"
+#include "d3d11_injector.h"
 
 #include <memory>
 #include <unordered_map>
@@ -24,14 +25,13 @@ namespace vrperfkit {
 		virtual void Upscale(const D3D11PostProcessInput &input, const Viewport &outputViewport) = 0;
 	};
 
-	class __declspec(uuid("eca6ea48-d763-48b9-8181-4e316335ad97")) D3D11PostProcessor {
+	class D3D11PostProcessor : public D3D11Listener {
 	public:
 		D3D11PostProcessor(ComPtr<ID3D11Device> device);
-		~D3D11PostProcessor();
 
 		bool Apply(const D3D11PostProcessInput &input, Viewport &outputViewport);
 
-		void OnPSSetSamplers(ID3D11SamplerState **samplers, UINT numSamplers);
+		bool PrePSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState * const *ppSamplers) override;
 
 	private:
 		ComPtr<ID3D11Device> device;

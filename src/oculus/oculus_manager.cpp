@@ -4,6 +4,7 @@
 #include "logging.h"
 #include "resolution_scaling.h"
 #include "d3d11/d3d11_helper.h"
+#include "d3d11/d3d11_injector.h"
 #include "d3d11/d3d11_post_processor.h"
 
 #include <wrl/client.h>
@@ -63,6 +64,7 @@ namespace vrperfkit {
 	OculusManager g_oculus;
 
 	struct OculusD3D11Resources {
+		std::unique_ptr<D3D11Injector> injector;
 		std::unique_ptr<D3D11PostProcessor> postProcessor;
 		ComPtr<ID3D11Device> device;
 		ComPtr<ID3D11DeviceContext> context;
@@ -258,6 +260,8 @@ namespace vrperfkit {
 		}
 
 		d3d11Res->postProcessor.reset(new D3D11PostProcessor(d3d11Res->device));
+		d3d11Res->injector.reset(new D3D11Injector(d3d11Res->device));
+		d3d11Res->injector->AddListener(d3d11Res->postProcessor.get());
 
 		LOG_INFO << "D3D11 resource creation complete";
 		initialized = true;

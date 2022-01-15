@@ -51,6 +51,7 @@ namespace vrperfkit {
 
 	struct OpenVrD3D11Resources {
 		std::unique_ptr<D3D11PostProcessor> postProcessor;
+		std::unique_ptr<D3D11Injector> injector;
 		ComPtr<ID3D11Device> device;
 		ComPtr<ID3D11DeviceContext> context;
 		ComPtr<ID3D11Texture2D> resolveTexture;
@@ -255,6 +256,8 @@ namespace vrperfkit {
 		d3d11Res->device->GetImmediateContext(d3d11Res->context.GetAddressOf());
 
 		d3d11Res->postProcessor.reset(new D3D11PostProcessor(d3d11Res->device));
+		d3d11Res->injector.reset(new D3D11Injector(d3d11Res->device));
+		d3d11Res->injector->AddListener(d3d11Res->postProcessor.get());
 
 		graphicsApi = GraphicsApi::D3D11;
 		textureWidth = td.Width;
