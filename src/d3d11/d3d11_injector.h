@@ -7,6 +7,7 @@ namespace vrperfkit {
 	class D3D11Listener {
 	public:
 		virtual bool PrePSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState *const *ppSamplers) { return false; }
+		virtual void PostOMSetRenderTargets(UINT numViews, ID3D11RenderTargetView *const *renderTargetViews, ID3D11DepthStencilView *depthStencilView) {}
 
 	protected:
 		~D3D11Listener() = default;
@@ -21,6 +22,7 @@ namespace vrperfkit {
 		void RemoveListener(D3D11Listener *listener);
 
 		bool PrePSSetSamplers(UINT startSlot, UINT numSamplers, ID3D11SamplerState *const *ppSamplers);
+		void PostOMSetRenderTargets(UINT numViews, ID3D11RenderTargetView *const *renderTargetViews, ID3D11DepthStencilView *depthStencilView);
 
 	private:
 		ComPtr<ID3D11Device> device;

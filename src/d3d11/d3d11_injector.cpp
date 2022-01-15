@@ -42,6 +42,37 @@ namespace vrperfkit {
 
 			hooks::CallOriginal(D3D11ContextHook_PSSetSamplers)(self, StartSlot, NumSamplers, ppSamplers);
 		}
+
+		void D3D11ContextHook_OMSetRenderTargets(
+				ID3D11DeviceContext *self,
+				UINT NumViews, ID3D11RenderTargetView * const *ppRenderTargetViews,
+				ID3D11DepthStencilView *pDepthStencilView) {
+			HookGuard hookGuard;
+
+			hooks::CallOriginal(D3D11ContextHook_OMSetRenderTargets)(self, NumViews, ppRenderTargetViews, pDepthStencilView);
+
+			if (D3D11Injector *injector = GetInjector(self)) {
+				injector->PostOMSetRenderTargets(NumViews, ppRenderTargetViews, pDepthStencilView);
+			}
+		}
+
+		void D3D11ContextHook_OMSetRenderTargetsAndUnorderedAccessViews(
+				ID3D11DeviceContext *self,
+				UINT NumRTVs,
+				ID3D11RenderTargetView * const *ppRenderTargetViews,
+				ID3D11DepthStencilView *pDepthStencilView,
+				UINT UAVStartSlot,
+				UINT NumUAVs,
+				ID3D11UnorderedAccessView * const *ppUnorderedAccessViews,
+				const UINT *pUAVInitialCounts) {
+			HookGuard hookGuard;
+
+			hooks::CallOriginal(D3D11ContextHook_OMSetRenderTargetsAndUnorderedAccessViews)(self, NumRTVs, ppRenderTargetViews, pDepthStencilView, UAVStartSlot, NumUAVs, ppUnorderedAccessViews, pUAVInitialCounts);
+
+			if (D3D11Injector *injector = GetInjector(self)) {
+				injector->PostOMSetRenderTargets(NumRTVs, ppRenderTargetViews, pDepthStencilView);
+			}
+		}
 	}
 
 	D3D11Injector::D3D11Injector(ComPtr<ID3D11Device> device) {
@@ -54,10 +85,14 @@ namespace vrperfkit {
 		context->SetPrivateData(__uuidof(D3D11Injector), size, &instance);
 
 		hooks::InstallVirtualFunctionHook("ID3D11DeviceContext::PSSetSamplers", context.Get(), 10, (void*)&D3D11ContextHook_PSSetSamplers);
+		hooks::InstallVirtualFunctionHook("ID3D11DeviceContext::OMSetRenderTargets", context.Get(), 33, (void*)&D3D11ContextHook_OMSetRenderTargets);
+		hooks::InstallVirtualFunctionHook("ID3D11DeviceContext::OMSetRenderTargetsAndUnorderedAccessViews", context.Get(), 34, (void*)&D3D11ContextHook_OMSetRenderTargetsAndUnorderedAccessViews);
 	}
 
 	D3D11Injector::~D3D11Injector() {
 		hooks::RemoveHook((void*)&D3D11ContextHook_PSSetSamplers);
+		hooks::RemoveHook((void*)&D3D11ContextHook_OMSetRenderTargets);
+		hooks::RemoveHook((void*)&D3D11ContextHook_OMSetRenderTargetsAndUnorderedAccessViews);
 
 		device->SetPrivateData(__uuidof(D3D11Injector), 0, nullptr);
 		context->SetPrivateData(__uuidof(D3D11Injector), 0, nullptr);
@@ -84,5 +119,11 @@ namespace vrperfkit {
 		}
 
 		return false;
+	}
+
+	void D3D11Injector::PostOMSetRenderTargets(UINT numViews, ID3D11RenderTargetView *const *renderTargetViews, ID3D11DepthStencilView *depthStencilView) {
+		for (D3D11Listener *listener : listeners) {
+			listener->PostOMSetRenderTargets(numViews, renderTargetViews, depthStencilView);
+		}
 	}
 }

@@ -34,6 +34,22 @@ namespace vrperfkit {
 		}
 	}
 
+	FixedFoveatedMethod FFRMethodFromString(std::string s) {
+		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+		if (s == "vrs") {
+			return FixedFoveatedMethod::VRS;
+		}
+		LOG_INFO << "Unknown fixed foveated method " << s << ", defaulting to VRS";
+		return FixedFoveatedMethod::VRS;
+	}
+
+	std::string FFRMethodToString(FixedFoveatedMethod method) {
+		switch (method) {
+		case FixedFoveatedMethod::VRS:
+			return "VRS";
+		}
+	}
+
 	std::string PrintToggle(bool toggle) {
 		return toggle ? "enabled" : "disabled";
 	}
@@ -70,6 +86,13 @@ namespace vrperfkit {
 			dxvk.enabled = dxvkCfg["enabled"].as<bool>(dxvk.enabled);
 			dxvk.dxgiDllPath = dxvkCfg["dxgiDllPath"].as<std::string>(dxvk.dxgiDllPath);
 			dxvk.d3d11DllPath = dxvkCfg["d3d11DllPath"].as<std::string>(dxvk.d3d11DllPath);
+
+			YAML::Node ffrCfg = cfg["fixedFoveated"];
+			FixedFoveatedConfig &ffr = g_config.ffr;
+			ffr.enabled = ffrCfg["enabled"].as<bool>(ffr.enabled);
+			ffr.innerRadius = ffrCfg["innerRadius"].as<float>(ffr.innerRadius);
+			ffr.midRadius = ffrCfg["midRadius"].as<float>(ffr.midRadius);
+			ffr.outerRadius = ffrCfg["outerRadius"].as<float>(ffr.outerRadius);
 
 			g_config.debugMode = cfg["debugMode"].as<bool>(g_config.debugMode);
 

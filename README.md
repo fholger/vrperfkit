@@ -28,11 +28,26 @@ Supported VR runtimes:
 Extract `dxgi.dll` and `vrperfkit.yml` next to the game's main executable.
 For Unreal Engine games, this is typically `<Game>Game\Binaries\Win64\<Game>Game-Win64-Shipping.exe`.
 
+Edit the `vrperfkit.yml` config file to your heart's content. The available options are
+documented inside the config file; you'll have to experiment with them and try which options
+work for your particular game.
+
 ## Build instructions
 
 Clone the repository and init all submodules.
 
+```
+git clone https://github.com/fholger/vrperfkit.git
+cd vrperfkit
+git submodule init
+git submodule update --recursive
+```
+
 Download the [Oculus SDK](https://developer.oculus.com/downloads/package/oculus-sdk-for-windows)
 and extract `LibOVR` from the downloaded archive to the `ThirdParty` folder.
 
-Run cmake to generate Visual Studio solution files. Build with Visual Studio.
+Download [NVAPI](https://developer.nvidia.com/nvapi) (requires NVIDIA developer account) and extract
+the contents of the `Rxxx-developer` folder to `ThirdParty\nvapi`.
+
+Run cmake to generate Visual Studio solution files. Build with Visual Studio. Note: Ninja does not work,
+due to the included shaders that need to be compiled. This is only supported with VS solutions.

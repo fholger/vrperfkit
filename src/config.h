@@ -22,9 +22,18 @@ namespace vrperfkit {
 		bool shouldUseDxvk = true;
 	};
 
+	struct FixedFoveatedConfig {
+		bool enabled = false;
+		FixedFoveatedMethod method = FixedFoveatedMethod::VRS;
+		float innerRadius = 0.6f;
+		float midRadius = 0.8f;
+		float outerRadius = 1.0f;
+	};
+
 	struct Config {
 		UpscaleConfig upscaling;
 		DxvkConfig dxvk;
+		FixedFoveatedConfig ffr;
 		bool debugMode = false;
 		std::string dllLoadPath = "";
 

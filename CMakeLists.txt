@@ -65,6 +65,8 @@ set(D3D11_FILES
 	src/d3d11/d3d11_post_processor.cpp
 	src/d3d11/d3d11_injector.h
 	src/d3d11/d3d11_injector.cpp
+	src/d3d11/d3d11_variable_rate_shading.h
+	src/d3d11/d3d11_variable_rate_shading.cpp
 	src/d3d11/ScreenGrab11.h
 	src/d3d11/ScreenGrab11.cpp
 )
@@ -138,8 +140,15 @@ include_directories(
 	ThirdParty/openvr/headers
 	ThirdParty/Vulkan-Headers/include
 	ThirdParty/dxvk/src
+	ThirdParty/nvapi
 	${CMAKE_CURRENT_BINARY_DIR}
 )
+
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	set(NVAPI_LIB ${CMAKE_SOURCE_DIR}/ThirdParty/nvapi/amd64/nvapi64.lib)
+else()
+	set(NVAPI_LIB ${CMAKE_SOURCE_DIR}/ThirdParty/nvapi/x86/nvapi.lib)
+endif()
 
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 # do not merge functions with identical bodies; we need them to be separate entities for hooking purposes
@@ -151,4 +160,4 @@ endif()
 
 add_library(vrperfkit SHARED ${PROJECT_FILES})
 set_target_properties(vrperfkit PROPERTIES OUTPUT_NAME "dxgi")
-target_link_libraries(vrperfkit minhook yaml-cpp dxguid)
+target_link_libraries(vrperfkit minhook yaml-cpp dxguid ${NVAPI_LIB})

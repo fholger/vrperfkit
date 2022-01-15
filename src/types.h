@@ -53,4 +53,10 @@ namespace vrperfkit {
 	};
 	UpscaleMethod MethodFromString(std::string s);
 	std::string MethodToString(UpscaleMethod method);
+
+	enum class FixedFoveatedMethod {
+		VRS,
+	};
+	FixedFoveatedMethod FFRMethodFromString(std::string s);
+	std::string FFRMethodToString(FixedFoveatedMethod method);
 }

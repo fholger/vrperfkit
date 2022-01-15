@@ -55,6 +55,11 @@ namespace {
 		LOG_INFO << "MIP LOD bias is now " << (g_config.upscaling.applyMipBias ? "enabled" : "disabled");
 	}
 
+	void ToggleFixedFoveated() {
+		g_config.ffr.enabled = !g_config.ffr.enabled;
+		LOG_INFO << "Fixed foveated is now " << (g_config.ffr.enabled ? "enabled" : "disabled");
+	}
+
 	void CaptureOutput() {
 		g_config.captureOutput = true;
 		LOG_INFO << "Capturing output...";
@@ -75,6 +80,7 @@ namespace {
 			{"decreaseUpscalingSharpness", DecreaseUpscalingSharpness},
 			{"toggleDebugMode", ToggleDebugMode},
 			{"toggleUpscalingApplyMipBias", ToggleUpscalingApplyMipBias},
+			{"toggleFixedFoveated", ToggleFixedFoveated},
 			{"captureOutput", CaptureOutput},
 		};
 	}

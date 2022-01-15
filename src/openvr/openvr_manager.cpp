@@ -7,6 +7,7 @@
 
 #include "d3d11/d3d11_helper.h"
 #include "d3d11/d3d11_post_processor.h"
+#include "d3d11/d3d11_variable_rate_shading.h"
 
 #include "dxgi/dxgi_interfaces.h"
 
@@ -51,6 +52,7 @@ namespace vrperfkit {
 
 	struct OpenVrD3D11Resources {
 		std::unique_ptr<D3D11PostProcessor> postProcessor;
+		std::unique_ptr<D3D11VariableRateShading> variableRateShading;
 		std::unique_ptr<D3D11Injector> injector;
 		ComPtr<ID3D11Device> device;
 		ComPtr<ID3D11DeviceContext> context;
@@ -254,10 +256,12 @@ namespace vrperfkit {
 		tex->GetDesc(&td);
 		tex->GetDevice(d3d11Res->device.GetAddressOf());
 		d3d11Res->device->GetImmediateContext(d3d11Res->context.GetAddressOf());
-
+		d3d11Res->variableRateShading.reset(new D3D11VariableRateShading(d3d11Res->device));
 		d3d11Res->postProcessor.reset(new D3D11PostProcessor(d3d11Res->device));
+		
 		d3d11Res->injector.reset(new D3D11Injector(d3d11Res->device));
 		d3d11Res->injector->AddListener(d3d11Res->postProcessor.get());
+		d3d11Res->injector->AddListener(d3d11Res->variableRateShading.get());
 
 		graphicsApi = GraphicsApi::D3D11;
 		textureWidth = td.Width;
@@ -387,6 +391,8 @@ namespace vrperfkit {
 			outputTexInfo->eColorSpace = inputIsSrgb ? ColorSpace_Gamma : ColorSpace_Auto;
 			info.texture = outputTexInfo.get();
 		}
+
+		d3d11Res->variableRateShading->UpdateTargetInformation(itd.Width, itd.Height, input.mode, projCenters.eyeCenter[0].x, projCenters.eyeCenter[0].y, projCenters.eyeCenter[1].x, projCenters.eyeCenter[1].y);
 	}
 
 	void OpenVrManager::PatchDxvkSubmit(OpenVrSubmitInfo &info) {
