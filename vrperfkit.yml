@@ -36,6 +36,27 @@ upscaling:
   # issues, you may want to turn this off.
   applyMipBias: true
 
+# Fixed foveated rendering: continue rendering the center of the image at full
+# resolution, but drop the resolution when going to the edges of the image.
+# There are four rings whose radii you can configure below. The inner ring/circle
+# is the area that's rendered at full resolution and reaches from the center to innerRadius.
+# The second ring reaches from innerRadius to midRadius and is rendered at half resolution.
+# The third ring reaches from midRadius to outerRadius and is rendered at 1/4th resolution.
+# The final fourth ring reaches from outerRadius to the edges of the image and is rendered
+# at 1/16th resolution.
+# Fixed foveated rendering is achieved with Variable Rate Shading. This technique is only
+# available on NVIDIA RTX and GTX 16xx cards.
+fixedFoveated:
+  # enable (true) or disable (false) fixed foveated rendering
+  enabled: false
+  # configure the end of the inner circle, which is the area that will be rendered at full resolution
+  innerRadius: 0.6
+  # configure the end of the second ring, which will be rendered at half resolution
+  midRadius: 0.8
+  # configure the end of the third ring, which will be rendered at 1/4th resolution
+  outerRadius: 1.0
+  # the remainder of the image will be rendered at 1/16th resolution
+
 # Enabling debugMode will visualize the radius to which upscaling is applied (see above).
 # It will also output additional log messages and regularly report how much GPU frame time
 # the post-processing costs.
@@ -66,3 +87,5 @@ hotkeys:
   # take a screen grab of the final (post-processed, upscaled) image.
   # The screen grab is stored as a dds file next to the DLL.
   captureOutput: ["ctrl", "f8"]
+  # toggle fixed foveated rendering
+  toggleFixedFoveated: ["alt", "f1"]

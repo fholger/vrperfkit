@@ -9,11 +9,12 @@ Included mods:
   * AMD FidelityFX Super Resolution
   * NVIDIA Image Scaling
   * AMD Contrast Adaptive Sharpening
+* Fixed foveated rendering (render center of image at full resolution, but drop resolution towards edges)
+  * Variable Rate Shading (only for NVIDIA RTX / GTX 16xx cards)
 
 Planned mods:
 
 * "Fixed foveated" rendering (render fewer pixels at the edges of the screen)
-  * Variable Rate Shading (only for NVIDIA RTX / GTX 16xx cards)
   * Radial Density Masking (all GPUs, but works only with a handful of games)
 * Force hidden area mask: don't render pixels at the edges that are not visible in the headset.
   Many games already use this mask, but not all. This mod will allow you to force its usage.
