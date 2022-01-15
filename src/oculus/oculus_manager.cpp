@@ -6,6 +6,7 @@
 #include "d3d11/d3d11_helper.h"
 #include "d3d11/d3d11_injector.h"
 #include "d3d11/d3d11_post_processor.h"
+#include "d3d11/d3d11_variable_rate_shading.h"
 
 #include <wrl/client.h>
 #include <d3d11.h>
@@ -65,6 +66,7 @@ namespace vrperfkit {
 
 	struct OculusD3D11Resources {
 		std::unique_ptr<D3D11Injector> injector;
+		std::unique_ptr<D3D11VariableRateShading> variableRateShading;
 		std::unique_ptr<D3D11PostProcessor> postProcessor;
 		ComPtr<ID3D11Device> device;
 		ComPtr<ID3D11DeviceContext> context;
@@ -260,8 +262,10 @@ namespace vrperfkit {
 		}
 
 		d3d11Res->postProcessor.reset(new D3D11PostProcessor(d3d11Res->device));
+		d3d11Res->variableRateShading.reset(new D3D11VariableRateShading(d3d11Res->device));
 		d3d11Res->injector.reset(new D3D11Injector(d3d11Res->device));
 		d3d11Res->injector->AddListener(d3d11Res->postProcessor.get());
+		d3d11Res->injector->AddListener(d3d11Res->variableRateShading.get());
 
 		LOG_INFO << "D3D11 resource creation complete";
 		initialized = true;
@@ -324,6 +328,10 @@ namespace vrperfkit {
 				eyeLayer.Viewport[eye].Size.w = outputViewport.width;
 				eyeLayer.Viewport[eye].Size.h = outputViewport.height;
 			}
+
+			D3D11_TEXTURE2D_DESC td;
+			input.inputTexture->GetDesc(&td);
+			d3d11Res->variableRateShading->UpdateTargetInformation(td.Width, td.Height, input.mode, projCenters.eyeCenter[0].x, projCenters.eyeCenter[0].y, projCenters.eyeCenter[1].x, projCenters.eyeCenter[1].y);
 		}
 	}
 }
