@@ -116,6 +116,9 @@ namespace vrperfkit {
 		context->RSGetViewports( &state.numViewports, state.viewports );
 		context->VSGetConstantBuffers( 0, 1, state.vsConstantBuffer.GetAddressOf() );
 		context->PSGetConstantBuffers( 0, 1, state.psConstantBuffer.GetAddressOf() );
+		context->CSGetConstantBuffers(0, 1, state.csConstantBuffer.GetAddressOf());
+		context->CSGetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state.csShaderResources);
+		context->CSGetUnorderedAccessViews(0, D3D11_1_UAV_SLOT_COUNT, state.csUavs);
 	}
 
 	void RestoreD3D11State(ID3D11DeviceContext *context, const D3D11State &state) {
@@ -141,6 +144,18 @@ namespace vrperfkit {
 		context->RSSetViewports( state.numViewports, state.viewports );
 		context->VSSetConstantBuffers( 0, 1, state.vsConstantBuffer.GetAddressOf() );
 		context->PSSetConstantBuffers( 0, 1, state.psConstantBuffer.GetAddressOf() );
+		context->CSSetConstantBuffers(0, 1, state.csConstantBuffer.GetAddressOf());
+		context->CSSetShaderResources(0, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, state.csShaderResources);
+		for (int i = 0; i < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++i) {
+			if (state.csShaderResources[i])
+				state.csShaderResources[i]->Release();
+		}
+		UINT initial = 0;
+		context->CSSetUnorderedAccessViews(0, D3D11_1_UAV_SLOT_COUNT, state.csUavs, &initial);
+		for (int i = 0; i < D3D11_1_UAV_SLOT_COUNT; ++i) {
+			if (state.csUavs[i])
+				state.csUavs[i]->Release();
+		}
 	}
 
 	ComPtr<ID3D11ShaderResourceView> CreateShaderResourceView(ID3D11Device *device, ID3D11Texture2D *texture, int arrayIndex) {

@@ -40,6 +40,9 @@ namespace vrperfkit {
 		UINT numViewports = 0;
 		ComPtr<ID3D11Buffer> vsConstantBuffer;
 		ComPtr<ID3D11Buffer> psConstantBuffer;
+		ComPtr<ID3D11Buffer> csConstantBuffer;
+		ID3D11ShaderResourceView *csShaderResources[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+		ID3D11UnorderedAccessView *csUavs[D3D11_1_UAV_SLOT_COUNT];
 	};
 
 	void StoreD3D11State(ID3D11DeviceContext *context, D3D11State &state);
