@@ -91,7 +91,7 @@ namespace vrperfkit {
 
 	void D3D11VariableRateShading::PostOMSetRenderTargets(UINT numViews, ID3D11RenderTargetView * const *renderTargetViews,
 			ID3D11DepthStencilView *depthStencilView) {
-		if (!active || numViews == 0 || renderTargetViews[0] == nullptr || !g_config.ffr.enabled) {
+		if (!active || numViews == 0 || renderTargetViews == nullptr || renderTargetViews[0] == nullptr || !g_config.ffr.enabled) {
 			DisableVRS();
 			return;
 		}
