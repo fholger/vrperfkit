@@ -170,7 +170,7 @@ namespace vrperfkit {
 
 		for (int eye = 0; eye < 2; ++eye) {
 			d3d11Res->multisampled[eye] = false;
-			if (submittedEyeChains[eye] == nullptr)
+			if (submittedEyeChains[eye] == nullptr || (eye == 1 && submittedEyeChains[1] == submittedEyeChains[0]))
 				continue;
 
 			int length = 0;
@@ -232,7 +232,8 @@ namespace vrperfkit {
 
 		d3d11Res->usingArrayTex = false;
 
-		if (submittedEyeChains[1] == nullptr) {
+		if (outputEyeChains[1] == nullptr) {
+			outputEyeChains[1] = outputEyeChains[0];
 			LOG_INFO << "Game is using a single texture for both eyes";
 			d3d11Res->submittedTextures[1] = d3d11Res->submittedTextures[0];
 			d3d11Res->resolveTexture[1] = d3d11Res->resolveTexture[0];
@@ -273,6 +274,7 @@ namespace vrperfkit {
 
 	void OculusManager::PostProcessD3D11(ovrLayerEyeFovDepth &eyeLayer) {
 		auto projCenters = CalculateProjectionCenter(eyeLayer.Fov);
+		bool successfulPostprocessing = false;
 
 		for (int eye = 0; eye < 2; ++eye) {
 			int index;
@@ -321,17 +323,24 @@ namespace vrperfkit {
 
 			Viewport outputViewport;
 			if (d3d11Res->postProcessor->Apply(input, outputViewport)) {
-				ovr_CommitTextureSwapChain(session, outputEyeChains[eye]);
 				eyeLayer.ColorTexture[eye] = outputEyeChains[eye];
 				eyeLayer.Viewport[eye].Pos.x = outputViewport.x;
 				eyeLayer.Viewport[eye].Pos.y = outputViewport.y;
 				eyeLayer.Viewport[eye].Size.w = outputViewport.width;
 				eyeLayer.Viewport[eye].Size.h = outputViewport.height;
+				successfulPostprocessing = true;
 			}
 
 			D3D11_TEXTURE2D_DESC td;
 			input.inputTexture->GetDesc(&td);
 			d3d11Res->variableRateShading->UpdateTargetInformation(td.Width, td.Height, input.mode, projCenters.eyeCenter[0].x, projCenters.eyeCenter[0].y, projCenters.eyeCenter[1].x, projCenters.eyeCenter[1].y);
+		}
+
+		if (successfulPostprocessing) {
+			ovr_CommitTextureSwapChain(session, outputEyeChains[0]);
+			if (outputEyeChains[1] != outputEyeChains[0]) {
+				ovr_CommitTextureSwapChain(session, outputEyeChains[1]);
+			}
 		}
 	}
 }
