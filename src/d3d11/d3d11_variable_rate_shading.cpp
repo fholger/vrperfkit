@@ -241,16 +241,16 @@ namespace vrperfkit {
 	}
 
 	void D3D11VariableRateShading::SetupSingleEyeVRS( int eye, int width, int height, float projX, float projY ) {
-		if (!active || (singleEyeVRSTex[eye] && width == singleWidth[eye] && height == singleHeight[eye])) {
+		int vrsWidth = width / NV_VARIABLE_PIXEL_SHADING_TILE_WIDTH;
+		int vrsHeight = height / NV_VARIABLE_PIXEL_SHADING_TILE_HEIGHT;
+		if (!active || (singleEyeVRSTex[eye] && vrsWidth == singleWidth[eye] && vrsHeight == singleHeight[eye])) {
 			return;
 		}
 		singleEyeVRSTex[eye].Reset();
 		singleEyeVRSView[eye].Reset();
 
-		singleWidth[eye] = width;
-		singleHeight[eye] = height;
-		int vrsWidth = width / NV_VARIABLE_PIXEL_SHADING_TILE_WIDTH;
-		int vrsHeight = height / NV_VARIABLE_PIXEL_SHADING_TILE_HEIGHT;
+		singleWidth[eye] = vrsWidth;
+		singleHeight[eye] = vrsHeight;
 
 		LOG_INFO << "Creating VRS pattern texture for eye " << eye << " of size " << vrsWidth << "x" << vrsHeight;
 
@@ -293,18 +293,19 @@ namespace vrperfkit {
 	}
 
 	void D3D11VariableRateShading::SetupCombinedVRS( int width, int height, float leftProjX, float leftProjY, float rightProjX, float rightProjY ) {
-		if (!active || (combinedVRSTex && width == combinedWidth && height == combinedHeight)) {
+		int vrsWidth = width / NV_VARIABLE_PIXEL_SHADING_TILE_WIDTH;
+		int vrsHeight = height / NV_VARIABLE_PIXEL_SHADING_TILE_HEIGHT;
+		if (!active || (combinedVRSTex && vrsWidth == combinedWidth && vrsHeight == combinedHeight)) {
 			return;
 		}
+
 		combinedVRSTex.Reset();
 		combinedVRSView.Reset();
 
-		combinedWidth = width;
-		combinedHeight = height;
-		int vrsWidth = width / NV_VARIABLE_PIXEL_SHADING_TILE_WIDTH;
-		int vrsHeight = height / NV_VARIABLE_PIXEL_SHADING_TILE_HEIGHT;
+		combinedWidth = vrsWidth;
+		combinedHeight = vrsHeight;
 
-		LOG_INFO << "Creating combined VRS pattern texture of size " << vrsWidth << "x" << vrsHeight;
+		LOG_INFO << "Creating combined VRS pattern texture of size " << vrsWidth << "x" << vrsHeight << " for input texture size " << width << "x" << height;
 
 		D3D11_TEXTURE2D_DESC td = {};
 		td.Width = vrsWidth;
@@ -345,16 +346,16 @@ namespace vrperfkit {
 	}
 
 	void D3D11VariableRateShading::SetupArrayVRS( int width, int height, float leftProjX, float leftProjY, float rightProjX, float rightProjY ) {
-		if (!active || (arrayVRSTex && width == arrayWidth && height == arrayHeight)) {
+		int vrsWidth = width / NV_VARIABLE_PIXEL_SHADING_TILE_WIDTH;
+		int vrsHeight = height / NV_VARIABLE_PIXEL_SHADING_TILE_HEIGHT;
+		if (!active || (arrayVRSTex && vrsWidth == arrayWidth && vrsHeight == arrayHeight)) {
 			return;
 		}
 		arrayVRSTex.Reset();
 		arrayVRSView.Reset();
 
-		arrayWidth = width;
-		arrayHeight = height;
-		int vrsWidth = width / NV_VARIABLE_PIXEL_SHADING_TILE_WIDTH;
-		int vrsHeight = height / NV_VARIABLE_PIXEL_SHADING_TILE_HEIGHT;
+		arrayWidth = vrsWidth;
+		arrayHeight = vrsHeight;
 
 		LOG_INFO << "Creating array VRS pattern texture of size " << vrsWidth << "x" << vrsHeight;
 
