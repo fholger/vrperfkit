@@ -30,7 +30,7 @@ namespace vrperfkit {
 			g_openVr.PreCompositorWorkCall(true);
 			auto error = hooks::CallOriginal(IVRCompositor009Hook_Submit)(self, info.eye, info.texture, info.bounds, info.submitFlags);
 			if (error != vr::VRCompositorError_None) {
-				LOG_ERROR << "OpenVR submit failed: " << error;
+				LOG_DEBUG << "OpenVR submit failed: " << error;
 			}
 			g_openVr.PostCompositorWorkCall(true);
 			return error;
@@ -62,7 +62,7 @@ namespace vrperfkit {
 			auto error = hooks::CallOriginal(IVRCompositorHook_WaitGetPoses)(self, pRenderPoseArray, unRenderPoseArrayCount, pGamePoseArray, unGamePoseArrayCount);
 			g_openVr.PostCompositorWorkCall();
 			if (error != vr::VRCompositorError_None) {
-				LOG_ERROR << "OpenVR WaitGetPoses failed: " << error;
+				LOG_DEBUG << "OpenVR WaitGetPoses failed: " << error;
 			}
 			return error;
 		}

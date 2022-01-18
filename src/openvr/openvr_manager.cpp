@@ -361,6 +361,9 @@ namespace vrperfkit {
 		inputTexture->GetDesc(&itd);
 		d3d11Res->outputTexture->GetDesc(&otd);
 
+		bool isFlippedX = info.bounds->uMin > info.bounds->uMax;
+		bool isFlippedY = info.bounds->vMin > info.bounds->vMax;
+
 		bool inputIsSrgb = info.texture->eColorSpace == ColorSpace_Gamma || (info.texture->eColorSpace == ColorSpace_Auto && IsConsideredSrgbByOpenVR(itd.Format));
 		bool isCombinedTex = float(itd.Width) / itd.Height >= 1.5f * aspectRatio && std::abs(info.bounds->uMax - info.bounds->uMin) <= 0.5f;
 
@@ -378,12 +381,25 @@ namespace vrperfkit {
 		input.projectionCenter = projCenters.eyeCenter[info.eye];
 		input.mode = d3d11Res->usingArrayTex ? TextureMode::ARRAY : (isCombinedTex ? TextureMode::COMBINED : TextureMode::SINGLE);
 
+		if (isFlippedX) {
+			input.projectionCenter.x = 1.f - input.projectionCenter.x;
+		}
+		if (isFlippedY) {
+			input.projectionCenter.y = 1.f - input.projectionCenter.y;
+		}
+
 		Viewport outputViewport;
 		if (d3d11Res->postProcessor->Apply(input, outputViewport)) {
 			outputBounds.uMin = float(outputViewport.x) / otd.Width;
 			outputBounds.vMin = float(outputViewport.y) / otd.Height;
 			outputBounds.uMax = float(outputViewport.width + outputViewport.x) / otd.Width;
 			outputBounds.vMax = float(outputViewport.height + outputViewport.y) / otd.Height;
+			if (info.bounds->uMin > info.bounds->uMax) {
+				std::swap(outputBounds.uMin, outputBounds.uMax);
+			}
+			if (info.bounds->vMin > info.bounds->vMax) {
+				std::swap(outputBounds.vMin, outputBounds.vMax);
+			}
 			info.bounds = &outputBounds;
 
 			PrepareOutputTexInfo(info.texture, info.submitFlags);
@@ -392,7 +408,11 @@ namespace vrperfkit {
 			info.texture = outputTexInfo.get();
 		}
 
-		d3d11Res->variableRateShading->UpdateTargetInformation(itd.Width, itd.Height, input.mode, projCenters.eyeCenter[0].x, projCenters.eyeCenter[0].y, projCenters.eyeCenter[1].x, projCenters.eyeCenter[1].y);
+		float projLX = isFlippedX ? 1.f - projCenters.eyeCenter[0].x : projCenters.eyeCenter[0].x;
+		float projLY = isFlippedY ? 1.f - projCenters.eyeCenter[0].y : projCenters.eyeCenter[0].y;
+		float projRX = isFlippedX ? 1.f - projCenters.eyeCenter[1].x : projCenters.eyeCenter[1].x;
+		float projRY = isFlippedY ? 1.f - projCenters.eyeCenter[1].y : projCenters.eyeCenter[1].y;
+		d3d11Res->variableRateShading->UpdateTargetInformation(itd.Width, itd.Height, input.mode, projLX, projLY, projRX, projRY);
 	}
 
 	void OpenVrManager::PatchDxvkSubmit(OpenVrSubmitInfo &info) {

@@ -275,6 +275,7 @@ namespace vrperfkit {
 	void OculusManager::PostProcessD3D11(ovrLayerEyeFovDepth &eyeLayer) {
 		auto projCenters = CalculateProjectionCenter(eyeLayer.Fov);
 		bool successfulPostprocessing = false;
+		bool isFlippedY = eyeLayer.Header.Flags & ovrLayerFlag_TextureOriginAtBottomLeft;
 
 		for (int eye = 0; eye < 2; ++eye) {
 			int index;
@@ -311,6 +312,11 @@ namespace vrperfkit {
 			input.inputViewport.height = eyeLayer.Viewport[eye].Size.h;
 			input.eye = eye;
 			input.projectionCenter = projCenters.eyeCenter[eye];
+
+			if (isFlippedY) {
+				input.projectionCenter.y = 1.f - input.projectionCenter.y;
+			}
+
 			if (submittedEyeChains[1] == nullptr || submittedEyeChains[1] == submittedEyeChains[0]) {
 				if (d3d11Res->usingArrayTex) {
 					input.mode = TextureMode::ARRAY;
@@ -333,7 +339,11 @@ namespace vrperfkit {
 
 			D3D11_TEXTURE2D_DESC td;
 			input.inputTexture->GetDesc(&td);
-			d3d11Res->variableRateShading->UpdateTargetInformation(td.Width, td.Height, input.mode, projCenters.eyeCenter[0].x, projCenters.eyeCenter[0].y, projCenters.eyeCenter[1].x, projCenters.eyeCenter[1].y);
+			float projLX = projCenters.eyeCenter[0].x;
+			float projLY = isFlippedY ? 1.f - projCenters.eyeCenter[0].y : projCenters.eyeCenter[0].y;
+			float projRX = projCenters.eyeCenter[1].x;
+			float projRY = isFlippedY ? 1.f - projCenters.eyeCenter[1].y : projCenters.eyeCenter[1].y;
+			d3d11Res->variableRateShading->UpdateTargetInformation(td.Width, td.Height, input.mode, projLX, projLY, projRX, projRY);
 		}
 
 		if (successfulPostprocessing) {
