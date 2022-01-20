@@ -24,7 +24,12 @@ namespace vrperfkit {
 		void PreCompositorWorkCall(bool transition = false);
 		void PostCompositorWorkCall(bool transition = false);
 
+		void PreWaitGetPoses();
+		void PostWaitGetPoses();
+
 	private:
+		vr::IVRCompositor *compositor = nullptr;
+
 		bool failed = false;
 		bool initialized = false;
 		GraphicsApi graphicsApi = GraphicsApi::UNKNOWN;

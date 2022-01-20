@@ -172,9 +172,8 @@ namespace vrperfkit {
 			subResRange.levelCount = 1;
 			subResRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, dxvkRes->oldLayout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+			dxvkRes->dxvkDevice->FlushRenderingCommands();
 		}
-		LOG_DEBUG << "Flushing and locking dxvk queue";
-		dxvkRes->dxvkDevice->FlushRenderingCommands();
 		dxvkRes->dxvkDevice->LockSubmissionQueue();
 		g_config.dxvk.shouldUseDxvk = false;
 	}
@@ -190,7 +189,6 @@ namespace vrperfkit {
 		}
 
 		g_config.dxvk.shouldUseDxvk = true;
-		LOG_DEBUG << "Releasing dxvk queue";
 		dxvkRes->dxvkDevice->ReleaseSubmissionQueue();
 		dxvkRes->vkQueueLockCount = 0;
 
@@ -202,6 +200,22 @@ namespace vrperfkit {
 			subResRange.levelCount = 1;
 			subResRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			dxvkRes->dxvkDevice->TransitionSurfaceLayout(dxvkRes->dxvkSurface.Get(), &subResRange, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dxvkRes->oldLayout);
+		}
+	}
+
+	void OpenVrManager::PreWaitGetPoses() {
+		if (graphicsApi == GraphicsApi::DXVK) {
+			PreCompositorWorkCall();
+			compositor->PostPresentHandoff();
+			PostCompositorWorkCall();
+		}
+	}
+
+	void OpenVrManager::PostWaitGetPoses() {
+		if (graphicsApi == GraphicsApi::DXVK) {
+			PreCompositorWorkCall();
+			compositor->SubmitExplicitTimingData();
+			PostCompositorWorkCall();
 		}
 	}
 
@@ -303,12 +317,13 @@ namespace vrperfkit {
 		VkDevice vkDevice;
 		dxvkDevice->GetVulkanHandles(&instance, &physDev, &vkDevice);
 
-		auto *compositor = GetOpenVrCompositor();
+		compositor = GetOpenVrCompositor();
 		char buf[4096];
 		compositor->GetVulkanDeviceExtensionsRequired(physDev, buf, sizeof(buf));
 		LOG_INFO << "Required Vk device extensions: " << buf;
 		compositor->GetVulkanInstanceExtensionsRequired(buf, sizeof(buf));
 		LOG_INFO << "Required Vk instance extensions: " << buf;
+		compositor->SetExplicitTimingMode(VRCompositorTimingMode_Explicit_ApplicationPerformsPostPresentHandoff);
 
 		graphicsApi = GraphicsApi::DXVK;
 		initialized = true;
@@ -447,7 +462,6 @@ namespace vrperfkit {
 		dxvkRes->vkTexData.m_nQueueFamilyIndex = queueFamily;
 		dxvkRes->vkTexData.m_unArrayIndex = info.eye;
 		dxvkRes->vkTexData.m_unArraySize = create.arrayLayers;
-		LOG_INFO << "Dxvk texture info: " << create.extent.width << "x" << create.extent.height << " (" << (uint32_t)create.usage << "), " << (uint32_t)create.format;
 
 		if (!(create.usage & (VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT))) {
 			LOG_ERROR << "Vulkan texture is missing required usage flags!";

@@ -58,9 +58,9 @@ namespace vrperfkit {
 
 		vr::EVRCompositorError IVRCompositorHook_WaitGetPoses(vr::IVRCompositor *self, vr::TrackedDevicePose_t *pRenderPoseArray, uint32_t unRenderPoseArrayCount,
 				vr::TrackedDevicePose_t *pGamePoseArray, uint32_t unGamePoseArrayCount) {
-			g_openVr.PreCompositorWorkCall();
+			g_openVr.PreWaitGetPoses();
 			auto error = hooks::CallOriginal(IVRCompositorHook_WaitGetPoses)(self, pRenderPoseArray, unRenderPoseArrayCount, pGamePoseArray, unGamePoseArrayCount);
-			g_openVr.PostCompositorWorkCall();
+			g_openVr.PostWaitGetPoses();
 			if (error != vr::VRCompositorError_None) {
 				LOG_DEBUG << "OpenVR WaitGetPoses failed: " << error;
 			}
