@@ -149,23 +149,26 @@ namespace vrperfkit {
 		}
 
 #ifdef WIN64
-		std::wstring dllName = L"LibOVRRT64_1.dll";
+		std::wstring dllNames[] = { L"LibOVRRT64_1.dll", L"LibPVRRT64_1_X.dll" };
 #else
-		std::wstring dllName = L"LibOVRRT32_1.dll";
+		std::wstring dllNames[] = { L"LibOVRRT32_1.dll", "LibPVRRT32_1_X.dll" };
 #endif
-		HMODULE handle;
-		if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, dllName.c_str(), &handle)) {
-			return;
+		HMODULE handle = nullptr;
+		for (auto dllName : dllNames) {
+			if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, dllName.c_str(), &handle)) {
+				continue;
+			}
+
+			LOG_INFO << dllName << " is loaded in the process, installing hooks...";
+			hooks::InstallHookInDll("ovr_Initialize", handle, (void*)ovrHook_Initialize);
+			hooks::InstallHookInDll("ovr_GetFovTextureSize", handle, (void*)ovrHook_GetFovTextureSize);
+			hooks::InstallHookInDll("ovr_EndFrame", handle, (void*)ovrHook_EndFrame);
+			hooks::InstallHookInDll("ovr_SubmitFrame", handle, (void*)ovrHook_SubmitFrame);
+			hooks::InstallHookInDll("ovr_SubmitFrame2", handle, (void*)ovrHook_SubmitFrame2);
+
+			g_oculusDll = handle;
+			break;
 		}
-
-		LOG_INFO << dllName << " is loaded in the process, installing hooks...";
-		hooks::InstallHookInDll("ovr_Initialize", handle, (void*)ovrHook_Initialize);
-		hooks::InstallHookInDll("ovr_GetFovTextureSize", handle, (void*)ovrHook_GetFovTextureSize);
-		hooks::InstallHookInDll("ovr_EndFrame", handle, (void*)ovrHook_EndFrame);
-		hooks::InstallHookInDll("ovr_SubmitFrame", handle, (void*)ovrHook_SubmitFrame);
-		hooks::InstallHookInDll("ovr_SubmitFrame2", handle, (void*)ovrHook_SubmitFrame2);
-
-		g_oculusDll = handle;
 	}
 }
 
