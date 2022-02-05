@@ -20,7 +20,7 @@ vrperfkit for.
 For Steam games, this is usually `C:\Program Files (x86)\Steam\steamapps\common\<Game>`. You can also
 right-click on the game in Steam and choose "Manage" -> "Browse local files"
 
-![Steam Browse local files](/images/steam_find_install_location.jpg)
+![Steam Browse local files](images/steam_find_install_location.jpg)
 
 For Oculus games, look under `C:\Program Files\Oculus\Software\<Game>`. Oculus titles often have also
 very convoluted name for their directory, often pieced together by the developer's name and a project
@@ -61,4 +61,4 @@ your game is currently incompatible with vrperfkit.
 ### Step 6 - Configure the mod to your heart's content
 
 Now that you've successfully installed vrperfkit for your game, you need to configure it. Head over to
-the [Configuration guide](/configure/) and follow the instructions there.
+the [Configuration guide](config.md) and follow the instructions there.
