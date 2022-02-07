@@ -149,9 +149,9 @@ namespace vrperfkit {
 		}
 
 #ifdef WIN64
-		std::wstring dllNames[] = { L"LibOVRRT64_1.dll", L"LibPVRRT64_1_X.dll" };
+		std::wstring dllNames[] = { L"LibOVRRT64_1.dll", L"VirtualDesktop.LibOVRRT64_1.dll", L"LibPVRRT64_1_X.dll" };
 #else
-		std::wstring dllNames[] = { L"LibOVRRT32_1.dll", "LibPVRRT32_1_X.dll" };
+		std::wstring dllNames[] = { L"LibOVRRT32_1.dll", L"VirtualDesktop.LibOVRRT32_1.dll", L"LibPVRRT32_1_X.dll" };
 #endif
 		HMODULE handle = nullptr;
 		for (auto dllName : dllNames) {

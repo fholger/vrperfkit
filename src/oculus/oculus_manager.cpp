@@ -20,7 +20,7 @@ namespace vrperfkit {
 			if (OVR_FAILURE(result)) {
 				ovrErrorInfo info;
 				ovr_GetLastErrorInfo(&info);
-				std::string message = "Failed " + action + ": " + info.ErrorString;
+				std::string message = "Failed " + action + ": " + info.ErrorString + " (" + std::to_string(result) + ")";
 				throw std::exception(message.c_str());
 			}
 		}

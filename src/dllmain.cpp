@@ -6,6 +6,7 @@
 #include "oculus/oculus_hooks.h"
 #include "oculus/oculus_manager.h"
 #include "openvr/openvr_hooks.h"
+#include <mutex>
 
 namespace fs = std::filesystem;
 
@@ -25,8 +26,10 @@ namespace vrperfkit {
 }
 
 namespace {
+	std::mutex g_hookInstallMutex;
 
 	void InstallVrHooks() {
+		std::lock_guard<std::mutex> lock (g_hookInstallMutex);
 		vrperfkit::InstallOpenVrHooks();
 		vrperfkit::InstallOculusHooks();
 		vrperfkit::InstallD3D11Hooks();
@@ -37,6 +40,7 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryA)(lpFileName);
 
 		if (handle != nullptr && handle != vrperfkit::g_moduleSelf) {
+			LOG_DEBUG << "LoadLibraryA(" << lpFileName << ")";
 			InstallVrHooks();
 		}
 
@@ -47,6 +51,7 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryExA)(lpFileName, hFile, dwFlags);
 
 		if (handle != nullptr && handle != vrperfkit::g_moduleSelf && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
+			LOG_DEBUG << "LoadLibraryExA(" << lpFileName << ")";
 			InstallVrHooks();
 		}
 
@@ -57,6 +62,7 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryW)(lpFileName);
 
 		if (handle != nullptr && handle != vrperfkit::g_moduleSelf) {
+			LOG_DEBUG << "LoadLibraryW(" << lpFileName << ")";
 			InstallVrHooks();
 		}
 
@@ -67,6 +73,7 @@ namespace {
 		HMODULE handle = vrperfkit::hooks::CallOriginal(Hook_LoadLibraryExW)(lpFileName, hFile, dwFlags);
 
 		if (handle != nullptr && handle != vrperfkit::g_moduleSelf && (dwFlags & (LOAD_LIBRARY_AS_DATAFILE | LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE | LOAD_LIBRARY_AS_IMAGE_RESOURCE)) == 0) {
+			LOG_DEBUG << "LoadLibraryExW(" << lpFileName << ")";
 			InstallVrHooks();
 		}
 
