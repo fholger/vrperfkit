@@ -17,7 +17,7 @@ namespace vrperfkit {
 	}
 
 	bool ResolutionMatches(int actualSize, int targetSize) {
-		return actualSize >= targetSize && actualSize <= targetSize + 10;
+		return actualSize >= targetSize && actualSize <= targetSize + 2;
 	}
 
 	std::vector<uint8_t> CreateCombinedFixedFoveatedVRSPattern( int width, int height, float leftProjX, float leftProjY, float rightProjX, float rightProjY ) {
@@ -345,7 +345,11 @@ namespace vrperfkit {
 
 	void D3D11VariableRateShading::SetupCombinedVRS( int width, int height, float leftProjX, float leftProjY, float rightProjX, float rightProjY ) {
 		int vrsWidth = width / NV_VARIABLE_PIXEL_SHADING_TILE_WIDTH;
+		if (vrsWidth & 1)
+			++vrsWidth;
 		int vrsHeight = height / NV_VARIABLE_PIXEL_SHADING_TILE_HEIGHT;
+		if (vrsHeight & 1)
+			++vrsHeight;
 		if (!active || (combinedVRSTex && vrsWidth == combinedWidth && vrsHeight == combinedHeight)) {
 			return;
 		}
