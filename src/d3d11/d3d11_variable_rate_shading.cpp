@@ -16,6 +16,10 @@ namespace vrperfkit {
 		return 3;
 	}
 
+	bool ResolutionMatches(int actualSize, int targetSize) {
+		return actualSize >= targetSize && actualSize <= targetSize + 10;
+	}
+
 	std::vector<uint8_t> CreateCombinedFixedFoveatedVRSPattern( int width, int height, float leftProjX, float leftProjY, float rightProjX, float rightProjY ) {
 		std::vector<uint8_t> data (width * height);
 		int halfWidth = width / 2;
@@ -145,16 +149,16 @@ namespace vrperfkit {
 			return;
 		}
 
-		if (targetMode == TextureMode::SINGLE && td.Width >= 2 * targetWidth && td.Height >= targetHeight) {
+		if (targetMode == TextureMode::SINGLE && ResolutionMatches(td.Width, 2 * targetWidth) && ResolutionMatches(td.Height, targetHeight)) {
 			ApplyCombinedVRS(td.Width, td.Height);
 		}
-		else if (targetMode == TextureMode::COMBINED && td.Width >= targetWidth && td.Height >= targetHeight) {
+		else if (targetMode == TextureMode::COMBINED && ResolutionMatches(td.Width, targetWidth) && ResolutionMatches(td.Height, targetHeight)) {
 			ApplyCombinedVRS(td.Width, td.Height);
 		}
-		else if (targetMode != TextureMode::COMBINED && td.ArraySize == 2 && td.Width >= targetWidth && td.Height >= targetHeight) {
+		else if (targetMode != TextureMode::COMBINED && td.ArraySize == 2 && ResolutionMatches(td.Width, targetWidth) && ResolutionMatches(td.Height, targetHeight)) {
 			ApplyArrayVRS(td.Width, td.Height);
 		}
-		else if (targetMode == TextureMode::SINGLE && td.ArraySize == 1 && td.Width >= targetWidth && td.Height >= targetHeight) {
+		else if (targetMode == TextureMode::SINGLE && td.ArraySize == 1 && ResolutionMatches(td.Width, targetWidth) && ResolutionMatches(td.Height, targetHeight)) {
 			if (currentSingleEyeRT < singleEyeOrder.size()) {
 				char eye = singleEyeOrder[currentSingleEyeRT];
 				switch (eye) {
