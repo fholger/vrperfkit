@@ -8,14 +8,14 @@ upscaling:
   # - fsr (AMD FidelityFX Super Resolution)
   # - nis (NVIDIA Image Scaling)
   # - cas (AMD FidelityFX Contrast Adaptive Sharpening)
-  method: fsr
+  method: cas
   # control how much the render resolution is lowered. The renderScale factor is
   # applied to both width and height. So if renderScale is set to 0.5 and you
   # have a resolution of 2000x2000 configured in SteamVR, the resulting render
   # resolution is 1000x1000.
   # NOTE: this is different from how render scale works in SteamVR! A SteamVR
   # render scale of 0.5 would be equivalent to renderScale 0.707 in this mod!
-  renderScale: 0.77
+  renderScale: 0.9
   # configure how much the image is sharpened during upscaling.
   # This parameter works differently for each of the upscaling methods, so you
   # will have to tweak it after you have chosen your preferred upscaling method.
@@ -48,7 +48,7 @@ upscaling:
 # available on NVIDIA RTX and GTX 16xx cards.
 fixedFoveated:
   # enable (true) or disable (false) fixed foveated rendering
-  enabled: false
+  enabled: true
   # configure the end of the inner circle, which is the area that will be rendered at full resolution
   innerRadius: 0.6
   # configure the end of the second ring, which will be rendered at half resolution
@@ -56,6 +56,17 @@ fixedFoveated:
   # configure the end of the third ring, which will be rendered at 1/4th resolution
   outerRadius: 1.0
   # the remainder of the image will be rendered at 1/16th resolution
+
+  # when reducing resolution, prefer to keep horizontal (true) or vertical (false) resolution?
+  favorHorizontal: true
+
+  # when applying fixed foveated rendering, vrperfkit will do its best to guess when the game
+  # is rendering which eye to apply a proper foveation mask.
+  # However, for some games the default guess may be wrong. In such instances, you can uncomment
+  # and use the following option to change the order of rendering.
+  # Use letters L (left), R (right) or S (skip) to mark the order in which the game renders to the
+  # left or right eye, or skip a render target entirely.
+  #overrideSingleEyeOrder: LRLRLR
 
 # Enabling debugMode will visualize the radius to which upscaling is applied (see above).
 # It will also output additional log messages and regularly report how much GPU frame time
@@ -89,3 +100,5 @@ hotkeys:
   captureOutput: ["ctrl", "f8"]
   # toggle fixed foveated rendering
   toggleFixedFoveated: ["alt", "f1"]
+  # toggle if you want to prefer horizontal or vertical resolution
+  toggleFFRFavorHorizontal: ["alt", "f2"]
