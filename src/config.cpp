@@ -90,6 +90,7 @@ namespace vrperfkit {
 			YAML::Node ffrCfg = cfg["fixedFoveated"];
 			FixedFoveatedConfig &ffr = g_config.ffr;
 			ffr.enabled = ffrCfg["enabled"].as<bool>(ffr.enabled);
+			ffr.favorHorizontal = ffrCfg["favorHorizontal"].as<bool>(ffr.favorHorizontal);
 			ffr.innerRadius = ffrCfg["innerRadius"].as<float>(ffr.innerRadius);
 			ffr.midRadius = ffrCfg["midRadius"].as<float>(ffr.midRadius);
 			ffr.outerRadius = ffrCfg["outerRadius"].as<float>(ffr.outerRadius);

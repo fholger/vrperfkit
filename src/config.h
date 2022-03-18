@@ -28,6 +28,7 @@ namespace vrperfkit {
 		float innerRadius = 0.6f;
 		float midRadius = 0.8f;
 		float outerRadius = 1.0f;
+		bool favorHorizontal = true;
 	};
 
 	struct Config {

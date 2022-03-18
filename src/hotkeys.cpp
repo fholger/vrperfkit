@@ -60,6 +60,11 @@ namespace {
 		LOG_INFO << "Fixed foveated is now " << (g_config.ffr.enabled ? "enabled" : "disabled");
 	}
 
+	void ToggleFFRFavorHorizontal() {
+		g_config.ffr.favorHorizontal = !g_config.ffr.favorHorizontal;
+		LOG_INFO << "Fixed foveated now favors " << (g_config.ffr.favorHorizontal ? "horizontal" : "vertical") << " resolution";
+	}
+
 	void CaptureOutput() {
 		g_config.captureOutput = true;
 		LOG_INFO << "Capturing output...";
@@ -81,6 +86,7 @@ namespace {
 			{"toggleDebugMode", ToggleDebugMode},
 			{"toggleUpscalingApplyMipBias", ToggleUpscalingApplyMipBias},
 			{"toggleFixedFoveated", ToggleFixedFoveated},
+			{"toggleFFRFavorHorizontal", ToggleFFRFavorHorizontal},
 			{"captureOutput", CaptureOutput},
 		};
 	}

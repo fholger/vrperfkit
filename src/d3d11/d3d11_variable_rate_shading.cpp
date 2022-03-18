@@ -225,7 +225,7 @@ namespace vrperfkit {
 			vsrd[i].enableVariablePixelShadingRate = true;
 			memset(vsrd[i].shadingRateTable, 5, sizeof(vsrd[i].shadingRateTable));
 			vsrd[i].shadingRateTable[0] = NV_PIXEL_X1_PER_RASTER_PIXEL;
-			vsrd[i].shadingRateTable[1] = NV_PIXEL_X1_PER_1X2_RASTER_PIXELS;
+			vsrd[i].shadingRateTable[1] = g_config.ffr.favorHorizontal ? NV_PIXEL_X1_PER_2X1_RASTER_PIXELS : NV_PIXEL_X1_PER_1X2_RASTER_PIXELS;
 			vsrd[i].shadingRateTable[2] = NV_PIXEL_X1_PER_2X2_RASTER_PIXELS;
 			vsrd[i].shadingRateTable[3] = NV_PIXEL_X1_PER_4X4_RASTER_PIXELS;
 		}
