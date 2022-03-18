@@ -347,6 +347,8 @@ namespace vrperfkit {
 			d3d11Res->variableRateShading->UpdateTargetInformation(td.Width, td.Height, input.mode, projLX, projLY, projRX, projRY);
 		}
 
+		d3d11Res->variableRateShading->EndFrame();
+
 		if (successfulPostprocessing) {
 			ovr_CommitTextureSwapChain(session, outputEyeChains[0]);
 			if (outputEyeChains[1] != outputEyeChains[0]) {

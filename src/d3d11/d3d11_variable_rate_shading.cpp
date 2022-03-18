@@ -89,6 +89,27 @@ namespace vrperfkit {
 		proj[1][1] = rightProjY;
 	}
 
+	void D3D11VariableRateShading::EndFrame() {
+		if (currentSingleEyeRT > 0) {
+			if (currentSingleEyeRT != singleEyeOrder.size()) {
+				LOG_DEBUG << "Found " << currentSingleEyeRT << " single eye render targets in current frame";
+				// guess left eye being rendered first, followed by right eye
+				singleEyeOrder.clear();
+				for (int i = 0; i < currentSingleEyeRT / 2; ++i) {
+					singleEyeOrder.push_back('L');
+				}
+				for (int i = 0; i < currentSingleEyeRT / 2; ++i) {
+					singleEyeOrder.push_back('R');
+				}
+				for (int i = singleEyeOrder.size(); i < currentSingleEyeRT; ++i) {
+					singleEyeOrder.push_back('S');
+				}
+				LOG_DEBUG << "Guessing order of render targets as " << singleEyeOrder;
+			}
+		}
+		currentSingleEyeRT = 0;
+	}
+
 	void D3D11VariableRateShading::PostOMSetRenderTargets(UINT numViews, ID3D11RenderTargetView * const *renderTargetViews,
 			ID3D11DepthStencilView *depthStencilView) {
 		if (!active || numViews == 0 || renderTargetViews == nullptr || renderTargetViews[0] == nullptr || !g_config.ffr.enabled) {
@@ -125,9 +146,26 @@ namespace vrperfkit {
 			ApplyArrayVRS(td.Width, td.Height);
 		}
 		else if (targetMode == TextureMode::SINGLE && td.ArraySize == 1 && td.Width >= targetWidth && td.Height >= targetHeight) {
-			// FIXME: how to guess the current eye?
-			LOG_DEBUG << "VRS: Single eye target, don't know which eye";
-			DisableVRS();
+			if (currentSingleEyeRT < singleEyeOrder.size()) {
+				char eye = singleEyeOrder[currentSingleEyeRT];
+				switch (eye) {
+				case 'L':
+				case 'l':
+					ApplySingleEyeVRS(0, td.Width, td.Height);
+					break;
+				case 'R':
+				case 'r':
+					ApplySingleEyeVRS(1, td.Width, td.Height);
+					break;
+				default:
+					DisableVRS();
+				}
+			}
+			else {
+				LOG_DEBUG << "VRS: Single eye target, don't know which eye";
+				DisableVRS();
+			}
+			++currentSingleEyeRT;
 		}
 		else {
 			DisableVRS();

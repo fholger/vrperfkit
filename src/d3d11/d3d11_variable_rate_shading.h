@@ -15,6 +15,7 @@ namespace vrperfkit {
 		~D3D11VariableRateShading() { Shutdown(); }
 
 		void UpdateTargetInformation(int targetWidth, int targetHeight, TextureMode mode, float leftProjX, float leftProjY, float rightProjX, float rightProjY);
+		void EndFrame();
 
 		void PostOMSetRenderTargets(UINT numViews, ID3D11RenderTargetView * const *renderTargetViews, ID3D11DepthStencilView *depthStencilView) override;
 
@@ -33,6 +34,8 @@ namespace vrperfkit {
 		int singleHeight[2] = { 0, 0 };
 		ComPtr<ID3D11Texture2D> singleEyeVRSTex[2];
 		ComPtr<ID3D11NvShadingRateResourceView> singleEyeVRSView[2];
+		std::string singleEyeOrder;
+		int currentSingleEyeRT = 0;
 		int combinedWidth = 0;
 		int combinedHeight = 0;
 		ComPtr<ID3D11Texture2D> combinedVRSTex;

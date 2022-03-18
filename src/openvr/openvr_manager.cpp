@@ -428,6 +428,7 @@ namespace vrperfkit {
 		float projRX = isFlippedX ? 1.f - projCenters.eyeCenter[1].x : projCenters.eyeCenter[1].x;
 		float projRY = isFlippedY ? 1.f - projCenters.eyeCenter[1].y : projCenters.eyeCenter[1].y;
 		d3d11Res->variableRateShading->UpdateTargetInformation(itd.Width, itd.Height, input.mode, projLX, projLY, projRX, projRY);
+		d3d11Res->variableRateShading->EndFrame();
 	}
 
 	void OpenVrManager::PatchDxvkSubmit(OpenVrSubmitInfo &info) {
