@@ -105,6 +105,15 @@ namespace vrperfkit {
 					singleEyeOrder.push_back('S');
 				}
 				LOG_DEBUG << "Guessing order of render targets as " << singleEyeOrder;
+				if (!g_config.ffr.overrideSingleEyeOrder.empty()) {
+					if (g_config.ffr.overrideSingleEyeOrder.size() == singleEyeOrder.size()) {
+						singleEyeOrder = g_config.ffr.overrideSingleEyeOrder;
+						LOG_DEBUG << "Overriding order with " << singleEyeOrder;
+					}
+					else {
+						LOG_DEBUG << "Not using configured override since it does not match number of render targets: " << g_config.ffr.overrideSingleEyeOrder;
+					}
+				}
 			}
 		}
 		currentSingleEyeRT = 0;

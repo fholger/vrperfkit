@@ -94,6 +94,7 @@ namespace vrperfkit {
 			ffr.innerRadius = ffrCfg["innerRadius"].as<float>(ffr.innerRadius);
 			ffr.midRadius = ffrCfg["midRadius"].as<float>(ffr.midRadius);
 			ffr.outerRadius = ffrCfg["outerRadius"].as<float>(ffr.outerRadius);
+			ffr.overrideSingleEyeOrder = ffrCfg["overrideSingleEyeOrder"].as<std::string>(ffr.overrideSingleEyeOrder);
 
 			g_config.debugMode = cfg["debugMode"].as<bool>(g_config.debugMode);
 

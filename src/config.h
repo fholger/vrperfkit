@@ -29,6 +29,7 @@ namespace vrperfkit {
 		float midRadius = 0.8f;
 		float outerRadius = 1.0f;
 		bool favorHorizontal = true;
+		std::string overrideSingleEyeOrder;
 	};
 
 	struct Config {
