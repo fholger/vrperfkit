@@ -279,7 +279,8 @@ namespace vrperfkit {
 
 		for (int eye = 0; eye < 2; ++eye) {
 			int index;
-			Check("getting current swapchain index", ovr_GetTextureSwapChainCurrentIndex(session, submittedEyeChains[eye], &index));
+			ovrTextureSwapChain curSwapChain = submittedEyeChains[eye] != nullptr ? submittedEyeChains[eye] : submittedEyeChains[0];
+			Check("getting current swapchain index", ovr_GetTextureSwapChainCurrentIndex(session, curSwapChain, &index));
 			// since the current submitted texture has already been committed, the index will point past the current texture
 			index = (index - 1 + d3d11Res->submittedTextures[eye].size()) % d3d11Res->submittedTextures[eye].size();
 
