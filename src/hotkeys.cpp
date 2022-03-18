@@ -201,6 +201,13 @@ namespace vrperfkit {
 		}
 	}
 
+	bool CheckKey(int key) {
+		// ignore the least significant bit as it encodes if the key was pressed since the last call
+		// to GetAsyncKeyState. We are only interested in the most significant bit, which represents
+		// if the key is pressed right now.
+		return GetAsyncKeyState(key) & (~1);
+	}
+
 	void CheckHotkeys() {
 		if (!g_hotkeysEnabled) {
 			return;
@@ -212,7 +219,7 @@ namespace vrperfkit {
 
 			bool isActive = true;
 			for (int key : state.keys) {
-				isActive = isActive && GetAsyncKeyState(key);
+				isActive = isActive && CheckKey(key);
 			}
 
 			if (isActive && !state.wasActive) {
