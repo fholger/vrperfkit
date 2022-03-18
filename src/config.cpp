@@ -114,6 +114,15 @@ namespace vrperfkit {
 			LOG_INFO << "    * Radius:       " << std::setprecision(2) << g_config.upscaling.radius;
 			LOG_INFO << "    * MIP bias:     " << PrintToggle(g_config.upscaling.applyMipBias);
 		}
+		LOG_INFO << "  Fixed foveated rendering (" << FFRMethodToString(g_config.ffr.method) << ") is " << PrintToggle(g_config.ffr.enabled);
+		if (g_config.ffr.enabled) {
+			LOG_INFO << "    * Inner radius: " << std::setprecision(2) << g_config.ffr.innerRadius;
+			LOG_INFO << "    * Mid radius:   " << std::setprecision(2) << g_config.ffr.midRadius;
+			LOG_INFO << "    * Outer radius: " << std::setprecision(2) << g_config.ffr.outerRadius;
+			if (!g_config.ffr.overrideSingleEyeOrder.empty()) {
+				LOG_INFO << "    * Eye order:    " << g_config.ffr.overrideSingleEyeOrder;
+			}
+		}
 		LOG_INFO << "  Debug mode is " << PrintToggle(g_config.debugMode);
 		FlushLog();
 	}
