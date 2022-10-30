@@ -23,6 +23,7 @@ namespace vrperfkit {
 			switch (inputFormat) {
 			case DXGI_FORMAT_R10G10B10A2_UNORM:
 			case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+			case DXGI_FORMAT_R16G16B16A16_TYPELESS:
 				// SteamVR applies a different color conversion for these formats that we can't match
 				// with R8G8B8 textures, so we have to use a matching texture format for our own resources.
 				// Otherwise we'll get darkened pictures (applies to Revive mostly)
