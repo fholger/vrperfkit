@@ -27,6 +27,10 @@ namespace vrperfkit {
 				// with R8G8B8 textures, so we have to use a matching texture format for our own resources.
 				// Otherwise we'll get darkened pictures (applies to Revive mostly)
 				return DXGI_FORMAT_R10G10B10A2_UNORM;
+			case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+				// Same as above, for GTFO VR mod. 
+				// Oculus HMDs will return TextureUsesUnsupportedFormat if DXGI_FORMAT_R10G10B10A2_UNORM is used for this case.
+				return DXGI_FORMAT_R16G16B16A16_FLOAT;
 			default:
 				return DXGI_FORMAT_R8G8B8A8_UNORM;
 			}
